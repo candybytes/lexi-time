@@ -125,8 +125,12 @@ int readInputFile(char fileName[]){
             free(code);
             return 1;
         }
+        int i = 0;
+        for (i = 0; i < (int)fSize; i++) {
+            printf("%c", code[i]);
+        }
         
-        printf("the size of the code is %d\n", (int)fSize);
+        //printf("the size of the code is %d\n", (int)fSize);
         
         
     }
