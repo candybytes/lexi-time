@@ -12,7 +12,7 @@
  *  Copyright (c) 2015 ROBERT VALLADARES and DANISH WAHEED. All rights reserved.
  */
 
-/** Library declarations  */
+// Library declarations
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,26 +32,25 @@ int m_nEndOfComment = 0;
 // global strings for input output file names
 // file names array
 char *FPS[] = {"input.txt", "cleaninput.txt", "lexemetable.txt", "lexemelist.txt"};
-//char *CODE[] = NULL;
 
+// global data structures
 
-
-
-/** global data structures */
-
-/** Read ahead function prototypes */
-int readInputFile(char fileName[]);
+// Read ahead function prototypes
+int charCount(FILE *fp);
+void readInput(FILE *fp, char foo[]);
 void fileReadError(char fileName[], int reading);
 void initComment(char prevC, char nextC );
+//void initComment(char prevChar, char nextChar);
 
-/*************** Initial call to program  ***********/
+// -----------------Initial call to program  -----------------//
 int main(int argc, char *argv[]) {
     
     // if a file name for input is passed
     // use that name instead of the default in
     // FPS[0] = input.txt
+    //char code[] = readInput(char fileName[]);
     
-    
+    int i = 0;
     char *filename = NULL;
     if(argc > 1) {
         filename = argv[1];
@@ -59,113 +58,145 @@ int main(int argc, char *argv[]) {
     else {
         filename = FPS[0];
     }
-    // read the input from file
-    readInputFile(filename);
+    // declare input file pointer
+    FILE *ifp;
+    ifp = fopen(filename,"r");
+    
+    // how many characters in file
+    int count = charCount(ifp);
+    if (count < 0) {
+        fileReadError(filename, 1);
+        // this is fatal error
+        exit(EXIT_FAILURE);
+    }
+    //------------test print------------//
+    printf("characters count %d\n", count);
+    
+    // create char array to store each character from file
+    char code[count];
+    // read input file into array code[]
+    readInput(ifp, code);
+    
+    
+    //--------- test print  ------------//
+    for (i = 0; i < (count); i++) {
+        printf("%c\n", code[i]);
+    }
     
     return 0;
 }
 
 /**
- * "readInputFile(char fileName[])"
- * reads code from file
- * code is given in integer values
- * then store into a structure array
+ * "int charCount(FILE *fp)"
+ * count the amount of characters in input file
+ * without reading the file
+ * return an integer , count of characters
  *
  */
-/*
- */
-int readInputFile(char fileName[]){
-    // NEED TO DO, process each string through a analyzer and store
-    // the read code
+int charCount(FILE *fp){
     
-    int cChar;
-    long codeLength;
     long off_end;
     int rc;
     size_t fSize;
-    char *code = NULL;
+    int c;
+    char lett;
+    int i = 0;
     
-    if(fileName != NULL){
-        FILE *ifp;
-        ifp = fopen(fileName,"r");
+    //if the file pointer is null return error
+    if (fp != NULL) {
         
-        if (ifp == NULL) {
-            //if the file pointer is null return error
-            return 1;
-        }
-        
-        /*** find the lenght of code ***/
-        
-        
-        /* go to end of file */
-        rc = fseek(ifp, 0L, SEEK_END);
+        // go to end of file
+        rc = fseek(fp, 0L, SEEK_END);
         if (rc != 0) {
             // error ocurred
-            return 1;
+            return -1;
         }
-        /* Byte offset to the end of the file (size)*/
-        if (0 > ( off_end = ftell(ifp) ) ){
-            return 1;
+        // Byte offset to the end of the file (size)
+        if (0 > ( off_end = ftell(fp) ) ){
+            return -1;
         }
         
         fSize = (size_t)off_end;
-        
-        /* allocate a array to hold input code */
-        code = malloc(fSize);
-        if (code == NULL){
-            return 1;
+        // reset the file reader pointer to the begining of the file
+        rc = 0;
+        rc = fseek(fp, 0L, SEEK_SET);
+        if (rc != 0) {
+            // error ocurred
+            return -1;
         }
-        /* return to beginning of file */
-        rewind (ifp);
-        
-        /* put the entire code from file into code array */
-        /* check that the lenght is the same */
-        if (fSize != fread(code, 1, fSize, ifp)) {
-            // free the malloc created
-            free(code);
-            return 1;
-        }
-        int i = 0;
-        for (i = 0; i < (int)fSize; i++) {
-            printf("%c", code[i]);
-        }
-        
-        //printf("the size of the code is %d\n", (int)fSize);
-        
-        
+        // return the count of characters in the input file
+        return (int)fSize;
     }
-    // in case the file name passed is null, print error with filename default to FPS[0] and exit
     
-    return 1;
+    return -1;
+    
 }
 
-
 /**
- * "void isNotComment(char c)"
- * check if a character starts or ends a commend line
- * change m_nNotComment to 1 if is not a comment, or 0 if its a comment
+ * "readInput(FILE *fp, char src[])"
+ * read each individual character into array passed from main
+ * input file will be then store for use by other functions
  *
  */
-void initComment(char prevChar, char nextChar){
-    //printf("prev %c next %c\n",prevChar, nextChar );
+
+void readInput(FILE *fp, char src[]){
     
-    if (prevChar == '/' && nextChar == '*') {
-        
-        m_nNotComment = 0;
-        m_nStartOfComment = 1;
+    char lett;
+    int c;
+    int i = 0;
+    int rc = 0;
+    
+    if (fp == NULL || src == NULL) {
+        //if the file pointer or the char array is null, return error
+        return;
     }
     
-    if (prevChar == '*' && nextChar == '/') {
-        printf("exir Com \n");
-        m_nNotComment = 1;
-        m_nEndOfComment = 1;
-        
+    // declare char array to store file input
+    
+    // return to the begining of file reader pointer
+    rc = fseek(fp, 0L, SEEK_SET);
+    if (rc != 0) {
+        // error ocurred
+        fileReadError(FPS[0], 1);
+        // this is a fatal error
+        exit(EXIT_FAILURE);
+    }
+    // store each character into array pass from main
+    while ( (c = fgetc(fp)) != EOF ){
+        lett = c;
+        src[i++] = lett;
     }
     
     return;
 }
 
-
+/*---------comented out at the moment--------
+ 
+ * "void isNotComment(char c)"
+ * check if a character starts or ends a commend line
+ * change m_nNotComment to 1 if is not a comment, or 0 if its a comment
+ *
+ 
+ void initComment(char prevChar, char nextChar){
+ //printf("prev %c next %c\n",prevChar, nextChar );
+ 
+ if (prevChar == '/' && nextChar == '*') {
+ 
+ m_nNotComment = 0;
+ m_nStartOfComment = 1;
+ }
+ 
+ if (prevChar == '*' && nextChar == '/') {
+ printf("exir Com \n");
+ m_nNotComment = 1;
+ m_nEndOfComment = 1;
+ 
+ }
+ 
+ return;
+ }
+ 
+ */
 
 
 /**
