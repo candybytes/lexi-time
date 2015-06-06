@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
     }
     
     
-    // how many characters in file, add 1 for '\0' terminating char
+    // how many characters in file
     int count = charCount(ifp);
     if (count < 0) {
         fileReadError(filename, 1);
@@ -123,27 +123,29 @@ int main(int argc, char *argv[]) {
     char code[count];
     // cleanCode will have input without comments
     char cleanCode[count];
-    // initiaalize code arrays
+    // initialize code arrays
     for (i = 0; i < count; i++) {
-        code[i] = '@';
-        cleanCode[i] = '@';
+        code[i] = ' ';
+        cleanCode[i] = ' ';
     }
     // read input file into array code[]
     readInput(ifp, code);
-    //code[count] = 0;
+    
     
     // close the input file
     fclose(ifp);
-    //fclose(cifp);
+    // remove comments from input
     cleanInput(cifp, code, count, cleanCode);
-    //cleanCode[m_nCleanCount+1] = 0;
-    printf("clean count %d\n", m_nCleanCount);
     
+    //cleanCode[] now contains comments free input
+    
+    //----------test print---------//
     i = 0;
     while (cleanCode[i] != EOF) {
         printf("%c\n", cleanCode[i] );
         i++;
     }
+    //----------test print end---------//
     
     fclose(cifp);
     
@@ -236,10 +238,12 @@ void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]){
     
     int p = 1;
     int i = 0;
+    
     while (i < count) {
         // check if this is the begiining of a comment block
         if (src[i] == '/' && p == 1) {
             if (src[i + 1] == '*') {
+                // set print to false and skip the initial comment "/*" signal
                 p = 0;
                 i += 2;
             }
@@ -247,8 +251,12 @@ void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]){
         // check if this is the end of a comment block
         if (src[i] == '*' && p == 0) {
             if (src[i + 1] == '/') {
+                // set print to true and skip the ending comment "*/" signal
                 p = 1;
                 i += 2;
+                // continue, dont print immediatly, check if there are
+                // adjacent comment blocks
+                continue;
             }
         }
         
