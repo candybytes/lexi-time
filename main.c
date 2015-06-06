@@ -17,32 +17,67 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-/** global constants and
- * given constants by assigment */
-int m_nNotComment = 1;
-int m_nStartOfComment = 0;
-int m_nEndOfComment = 0;
 
-#define norw        15  /* number of reserved words             */
-#define imax     32767  /* maximum integer value                */
-#define cmax        11  /* maximum number if chars for indents  */
-#define nestmax      5  /* maximum depth of block nesting       */
-#define strmax     256  /* maximum length of strings            */
 
-// global strings for input output file names
-// file names array
+//------------------ global constants and given constants by assigment -------
+
+/*
+ #define norw        15              // number of reserved words
+ #define imax     32767              // maximum integer value
+ #define cmax        11              // maximum number if chars for indents
+ #define nestmax      5              // maximum depth of block nesting
+ #define strmax     256              // maximum length of strings
+ */
+#define MAX_NUMBER_DIGITS 5                 // Defines how many digits an integer can have
+#define MAX_IDENTIFIER_LENGTH 11            // Defines how long an identifier string can be
+#define MAX_NAMERECORD_TABLE_LENGTH 1000    // Defines how many tokens can be read
+int m_nCleanCount = 0;
+
+
+//global strings for input output file names
 char *FPS[] = {"input.txt", "cleaninput.txt", "lexemetable.txt", "lexemelist.txt"};
 
-// global data structures
+//------------------------- global data structures ------------------------
+// enumerator of the symbols
+typedef enum {
+    nulsym = 1, identsym, numbersym, plussym, minussym, multsym,
+    slashsym, oddsym, eqlsym, neqsym, lessym, leqsym,
+    gtrsym, geqsym, lparentsym, rparentsym, commasym, semicolonsym,
+    periodsym, becomessym, beginsym, endsym, ifsym, thensym,
+    whilesym, dosym, callsym, constsym, varsym, procsym,
+    writesym, readsym, elsesym } token_type;
 
-// Read ahead function prototypes
+//structure of the symbol table record
+typedef struct {
+    
+    int kind;           // constant = 1; var = 2, proc = 3
+    char name[12];      // name up to 11 characters long, 11 + 1 for \0
+    int val;            // number (ASCII value)
+    int level;          // L level
+    int adr;            // M address
+    
+} namerecord_t;
+
+
+//  reserved words
+char *word[] = {"null", "begin", "call", "const", "do", "else", "end", "if", "odd", "procedure", "read", "then", "var", "while", "write" };
+//  reserved words numerical representation from the token_type enum
+int wsym[] = { nulsym, beginsym, callsym, constsym, dosym, elsesym, endsym, ifsym, oddsym, procsym, readsym, thensym, varsym, whilesym, writesym};
+
+
+
+
+
+
+//------------------- Read ahead function prototypes--------------
 int charCount(FILE *fp);
 void readInput(FILE *fp, char foo[]);
 void fileReadError(char fileName[], int reading);
-void initComment(char prevC, char nextC );
-//void initComment(char prevChar, char nextChar);
+void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]);
 
-// -----------------Initial call to program  -----------------//
+
+
+// -----------------Initial call to program  -----------------
 int main(int argc, char *argv[]) {
     
     // if a file name for input is passed
@@ -61,27 +96,56 @@ int main(int argc, char *argv[]) {
     // declare input file pointer
     FILE *ifp;
     ifp = fopen(filename,"r");
+    if (ifp == NULL) {
+        fileReadError(filename, 1);
+        exit(EXIT_FAILURE);
+    }
     
-    // how many characters in file
+    
+    // declare clean input file output
+    FILE *cifp;
+    cifp = fopen(FPS[1],"w");
+    if (cifp == NULL) {
+        fileReadError(FPS[1], 0);
+        exit(EXIT_FAILURE);
+    }
+    
+    
+    // how many characters in file, add 1 for '\0' terminating char
     int count = charCount(ifp);
     if (count < 0) {
         fileReadError(filename, 1);
         // this is fatal error
         exit(EXIT_FAILURE);
     }
-    //------------test print------------//
-    printf("characters count %d\n", count);
-    
-    // create char array to store each character from file
+    //add 1 to count for '\0' terminating char
+    //count;
     char code[count];
+    // cleanCode will have input without comments
+    char cleanCode[count];
+    // initiaalize code arrays
+    for (i = 0; i < count; i++) {
+        code[i] = '@';
+        cleanCode[i] = '@';
+    }
     // read input file into array code[]
     readInput(ifp, code);
+    //code[count] = 0;
     
+    // close the input file
+    fclose(ifp);
+    //fclose(cifp);
+    cleanInput(cifp, code, count, cleanCode);
+    //cleanCode[m_nCleanCount+1] = 0;
+    printf("clean count %d\n", m_nCleanCount);
     
-    //--------- test print  ------------//
-    for (i = 0; i < (count); i++) {
-        printf("%c\n", code[i]);
+    i = 0;
+    while (cleanCode[i] != EOF) {
+        printf("%c\n", cleanCode[i] );
+        i++;
     }
+    
+    fclose(cifp);
     
     return 0;
 }
@@ -102,7 +166,7 @@ int charCount(FILE *fp){
     char lett;
     int i = 0;
     
-    //if the file pointer is null return error
+    // if the file pointer is null return error
     if (fp != NULL) {
         
         // go to end of file
@@ -141,9 +205,8 @@ int charCount(FILE *fp){
 
 void readInput(FILE *fp, char src[]){
     
-    char lett;
-    int c;
     int i = 0;
+    int c;
     int rc = 0;
     
     if (fp == NULL || src == NULL) {
@@ -161,43 +224,52 @@ void readInput(FILE *fp, char src[]){
         // this is a fatal error
         exit(EXIT_FAILURE);
     }
-    // store each character into array pass from main
+    // store each character into -array passed- from main
     while ( (c = fgetc(fp)) != EOF ){
-        lett = c;
-        src[i++] = lett;
+        src[i++] = c;
     }
     
     return;
 }
 
-/*---------comented out at the moment--------
- 
- * "void isNotComment(char c)"
- * check if a character starts or ends a commend line
- * change m_nNotComment to 1 if is not a comment, or 0 if its a comment
- *
- 
- void initComment(char prevChar, char nextChar){
- //printf("prev %c next %c\n",prevChar, nextChar );
- 
- if (prevChar == '/' && nextChar == '*') {
- 
- m_nNotComment = 0;
- m_nStartOfComment = 1;
- }
- 
- if (prevChar == '*' && nextChar == '/') {
- printf("exir Com \n");
- m_nNotComment = 1;
- m_nEndOfComment = 1;
- 
- }
- 
- return;
- }
- 
- */
-
+void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]){
+    
+    int p = 1;
+    int i = 0;
+    while (i < count) {
+        // check if this is the begiining of a comment block
+        if (src[i] == '/' && p == 1) {
+            if (src[i + 1] == '*') {
+                p = 0;
+                i += 2;
+            }
+        }
+        // check if this is the end of a comment block
+        if (src[i] == '*' && p == 0) {
+            if (src[i + 1] == '/') {
+                p = 1;
+                i += 2;
+            }
+        }
+        
+        if (p) {
+            fprintf( fp, "%c", src[i] );
+            // copy input code without comments into new array
+            cleanSrc[ m_nCleanCount++] = src[i];
+        }
+        
+        i++;
+        
+    }
+    // check if file only contains a comment opening statement
+    if (p == 0){
+        printf("ERROR, input file contains a open ended comment line\n");
+        exit(EXIT_FAILURE);
+    }
+    // reset the end of file for clean code array
+    cleanSrc[m_nCleanCount] = EOF;
+    
+}
 
 /**
  * "fileReadError(char fileName[], int reading)"
