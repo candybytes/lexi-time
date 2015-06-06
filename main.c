@@ -39,23 +39,26 @@ char *FPS[] = {"input.txt", "cleaninput.txt", "lexemetable.txt", "lexemelist.txt
 
 //------------------------- global data structures ------------------------
 // enumerator of the symbols
-typedef enum {
+typedef enum
+{
     nulsym = 1, identsym, numbersym, plussym, minussym, multsym,
     slashsym, oddsym, eqlsym, neqsym, lessym, leqsym,
     gtrsym, geqsym, lparentsym, rparentsym, commasym, semicolonsym,
     periodsym, becomessym, beginsym, endsym, ifsym, thensym,
     whilesym, dosym, callsym, constsym, varsym, procsym,
-    writesym, readsym, elsesym } token_type;
+    writesym, readsym, elsesym
+} token_type;
 
 //structure of the symbol table record
-typedef struct {
-    
+typedef struct
+{
+
     int kind;           // constant = 1; var = 2, proc = 3
     char name[12];      // name up to 11 characters long, 11 + 1 for \0
     int val;            // number (ASCII value)
     int level;          // L level
     int adr;            // M address
-    
+
 } namerecord_t;
 
 
@@ -78,42 +81,48 @@ void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]);
 
 
 // -----------------Initial call to program  -----------------
-int main(int argc, char *argv[]) {
-    
+int main(int argc, char *argv[])
+{
+
     // if a file name for input is passed
     // use that name instead of the default in
     // FPS[0] = input.txt
     //char code[] = readInput(char fileName[]);
-    
+
     int i = 0;
     char *filename = NULL;
-    if(argc > 1) {
+    if(argc > 1)
+    {
         filename = argv[1];
     }
-    else {
+    else
+    {
         filename = FPS[0];
     }
     // declare input file pointer
     FILE *ifp;
     ifp = fopen(filename,"r");
-    if (ifp == NULL) {
+    if (ifp == NULL)
+    {
         fileReadError(filename, 1);
         exit(EXIT_FAILURE);
     }
-    
-    
+
+
     // declare clean input file output
     FILE *cifp;
     cifp = fopen(FPS[1],"w");
-    if (cifp == NULL) {
+    if (cifp == NULL)
+    {
         fileReadError(FPS[1], 0);
         exit(EXIT_FAILURE);
     }
-    
-    
+
+
     // how many characters in file
     int count = charCount(ifp);
-    if (count < 0) {
+    if (count < 0)
+    {
         fileReadError(filename, 1);
         // this is fatal error
         exit(EXIT_FAILURE);
@@ -124,31 +133,33 @@ int main(int argc, char *argv[]) {
     // cleanCode will have input without comments
     char cleanCode[count];
     // initialize code arrays
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++)
+    {
         code[i] = ' ';
         cleanCode[i] = ' ';
     }
     // read input file into array code[]
     readInput(ifp, code);
-    
-    
+
+
     // close the input file
     fclose(ifp);
     // remove comments from input
     cleanInput(cifp, code, count, cleanCode);
-    
+
     //cleanCode[] now contains comments free input
-    
+
     //----------test print---------//
     i = 0;
-    while (cleanCode[i] != EOF) {
+    while (cleanCode[i] != EOF)
+    {
         printf("%c\n", cleanCode[i] );
         i++;
     }
     //----------test print end---------//
-    
+
     fclose(cifp);
-    
+
     return 0;
 }
 
@@ -159,43 +170,48 @@ int main(int argc, char *argv[]) {
  * return an integer , count of characters
  *
  */
-int charCount(FILE *fp){
-    
+int charCount(FILE *fp)
+{
+
     long off_end;
     int rc;
     size_t fSize;
     int c;
     char lett;
     int i = 0;
-    
+
     // if the file pointer is null return error
-    if (fp != NULL) {
-        
+    if (fp != NULL)
+    {
+
         // go to end of file
         rc = fseek(fp, 0L, SEEK_END);
-        if (rc != 0) {
+        if (rc != 0)
+        {
             // error ocurred
             return -1;
         }
         // Byte offset to the end of the file (size)
-        if (0 > ( off_end = ftell(fp) ) ){
+        if (0 > ( off_end = ftell(fp) ) )
+        {
             return -1;
         }
-        
+
         fSize = (size_t)off_end;
         // reset the file reader pointer to the begining of the file
         rc = 0;
         rc = fseek(fp, 0L, SEEK_SET);
-        if (rc != 0) {
+        if (rc != 0)
+        {
             // error ocurred
             return -1;
         }
         // return the count of characters in the input file
         return (int)fSize;
     }
-    
+
     return -1;
-    
+
 }
 
 /**
@@ -205,52 +221,62 @@ int charCount(FILE *fp){
  *
  */
 
-void readInput(FILE *fp, char src[]){
-    
+void readInput(FILE *fp, char src[])
+{
+
     int i = 0;
     int c;
     int rc = 0;
-    
-    if (fp == NULL || src == NULL) {
+
+    if (fp == NULL || src == NULL)
+    {
         //if the file pointer or the char array is null, return error
         return;
     }
-    
+
     // declare char array to store file input
-    
+
     // return to the begining of file reader pointer
     rc = fseek(fp, 0L, SEEK_SET);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         // error ocurred
         fileReadError(FPS[0], 1);
         // this is a fatal error
         exit(EXIT_FAILURE);
     }
     // store each character into -array passed- from main
-    while ( (c = fgetc(fp)) != EOF ){
+    while ( (c = fgetc(fp)) != EOF )
+    {
         src[i++] = c;
     }
-    
+
     return;
 }
 
-void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]){
-    
+void cleanInput(FILE *fp, char src[], int count, char cleanSrc[])
+{
+
     int p = 1;
     int i = 0;
-    
-    while (i < count) {
+
+    while (i < count)
+    {
         // check if this is the begiining of a comment block
-        if (src[i] == '/' && p == 1) {
-            if (src[i + 1] == '*') {
+        if (src[i] == '/' && p == 1)
+        {
+            if (src[i + 1] == '*')
+            {
                 // set print to false and skip the initial comment "/*" signal
                 p = 0;
                 i += 2;
             }
         }
         // check if this is the end of a comment block
-        if (src[i] == '*' && p == 0) {
-            if (src[i + 1] == '/') {
+        if (src[i] == '*' && p == 0)
+        {
+            if (src[i + 1] == '/')
+            {
                 // set print to true and skip the ending comment "*/" signal
                 p = 1;
                 i += 2;
@@ -259,24 +285,26 @@ void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]){
                 continue;
             }
         }
-        
-        if (p) {
+
+        if (p)
+        {
             fprintf( fp, "%c", src[i] );
             // copy input code without comments into new array
             cleanSrc[ m_nCleanCount++] = src[i];
         }
-        
+
         i++;
-        
+
     }
     // check if file only contains a comment opening statement
-    if (p == 0){
+    if (p == 0)
+    {
         printf("ERROR, input file contains a open ended comment line\n");
         exit(EXIT_FAILURE);
     }
     // reset the end of file for clean code array
     cleanSrc[m_nCleanCount] = EOF;
-    
+
 }
 
 /**
@@ -285,12 +313,13 @@ void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]){
  * if int reading = 1, then print reading, else reading = 0 = writing
  *
  */
-void fileReadError(char fileName[], int reading ){
-    
+void fileReadError(char fileName[], int reading )
+{
+
     char *str[] = {"writing", "reading"};
     printf("Warning!, Could not open the file %s for %s\n", fileName, str[reading]);
     return;
-    
+
 }
 
 
