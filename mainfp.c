@@ -37,6 +37,7 @@ int m_nCleanCount = 0;                      // global variable to track count of
 int m_nNameRecords = 0;                     // global variable to track count of NameRecord in input
 #define MAX_PUNCT   13                      // maximum amount of special symbols
 #define MAX_STR     256                     // maximum length of strings
+int m_nCleanInputTokens = 0;                // global variable to track count of clean tokens in input
 
 
 //global strings for input output file names
@@ -87,8 +88,10 @@ void readInput(FILE *fp, char foo[]);
 void fileReadError(char fileName[], int reading);
 void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]);
 int charType(char c);
-void splitInputTokens(char cleanSrc[]);
+void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]);
 int isSpecialChar(char c);
+char *cleanInputTokenCalloc(int tknSize);
+void freeInputTokenCalloc(char *caCleanInputTokens[]);
 
 
 
@@ -145,17 +148,41 @@ int main(int argc, char *argv[]) {
     
     // there will be at most m_nCleanCount separate string tokens
     char *caCleanInputTokens[m_nCleanCount];
+    // separate cleanCode into tokens, allocate space as needed with calloc
+    // need to free each caCleanInputTokens[] array index that calloc was done to
+    // if caCleanInputTokens[] is not null, free it before exiting program
+    // or after printing it to file
+    splitInputTokens(cleanCode, caCleanInputTokens);
     
-    //----------test print---------//
-    splitInputTokens(cleanCode);
-    /*
-     i = 0;
-     while (cleanCode[i] != EOF) {
-     printf("char %c is type %d\n", cleanCode[i], charType(cleanCode[i]));
-     i++;
-     }
-     */
-    //----------test print end---------//
+    
+    //----------test print start---------//
+    for (i = 0; i < m_nCleanInputTokens ; i++) {
+        printf("%s\n", caCleanInputTokens[i] );
+    }
+    printf("token count %d\n", m_nCleanInputTokens );
+    
+    //----------test print end-----------//
+    
+    ////// TO-D0-----some stuff from list bellow will go here
+    
+    
+    // call freeInputTokenCalloc after finishing the use of the array
+    freeInputTokenCalloc(caCleanInputTokens);
+    
+    
+    ////// TO-D0-----check that each token is a valid token (char length, declaration, integer size, etc...)
+    ////// TO-D0-----store token into array of namerecord_t;
+    ////// TO-D0-----get info for each token to fill variables of namerecord_t;
+    ////// TO-D0-----print namerecord_t array records (tokens, and tokens values)
+    ////// TO-D0-----close the last two file pointers created by createFilePointers();
+    ////// TO-D0-----celebrate this assigment is awesome and done;
+    
+    
+    // replace file pointers by knicnames created just like in line 115 and 117
+    // knicknames for file pointers examples FILE *ifp = m_FPS[input_txt];
+    // file pointer is already open and active, knickname is local
+    fclose(m_FPS[lexemetable_txt]);
+    fclose(m_FPS[lexemelist_txt]);
     
     
     return 0;
@@ -339,7 +366,7 @@ void fileReadError(char fileName[], int writing ){
 /*
  *  "int charType(char c)"
  *  return 0, 1, 2, 3 for the character type
- *  0 for neither, 1 for numerical, 2 for letter, 3 for punctiation
+ *  0 for neither, 1 for numerical, 2 for letter, 3 for punctuation
  */
 int charType(char c){
     // is c a number
@@ -363,13 +390,13 @@ int charType(char c){
  *   split clean source code into tokens
  */
 
-void splitInputTokens(char cleanSrc[]){
+void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]){
     
     int i = 0;
     int j = 0;
-    int newTkn = 0;
+    //int newTkn = 0;
     char tkn[MAX_STR] = " ";
-    int tokens = 0;
+    //int tokens = 0;
     
     
     while (i <= m_nCleanCount ) {
@@ -383,8 +410,11 @@ void splitInputTokens(char cleanSrc[]){
         if (charType(cleanSrc[i]) == 0) {
             // if at least one chacter is in local token array, print it and reset token
             if(j) {
-                // --- replace with storing into structure of some kind
-                printf("token %s\n", tkn);
+                // allocate space for token, store token, increase token count
+                caCleanInputTokens[m_nCleanInputTokens] = cleanInputTokenCalloc(j);
+                strcpy(caCleanInputTokens[m_nCleanInputTokens], tkn);
+                m_nCleanInputTokens++;
+                
             }
             // increase cleanSrc index
             i++;
@@ -398,8 +428,11 @@ void splitInputTokens(char cleanSrc[]){
         if (isSpecialChar(cleanSrc[i])) {
             // if at least one char is in local token
             if (j) {
-                // print token --- replace with storing into structure of some kind
-                printf("token %s\n", tkn);
+                // allocate space for token, store token, increase token count
+                caCleanInputTokens[m_nCleanInputTokens] = cleanInputTokenCalloc(j);
+                strcpy(caCleanInputTokens[m_nCleanInputTokens], tkn);
+                m_nCleanInputTokens++;
+                
             }
             // reset the token string
             memset(tkn, 0, sizeof(tkn));
@@ -424,6 +457,35 @@ int isSpecialChar(char c){
     }
     return 0;
 }
-
+/*
+ *   "char *cleanInputTokenCalloc(int tknSize)"
+ *   allocate memory for caCleanInputTokens[index] strings
+ */
+char *cleanInputTokenCalloc(int tknSize){
+    char *temp = calloc(tknSize, sizeof(char));
+    if (temp == NULL) {
+        printf("Error using calloc to create space for token string\n");
+        exit(EXIT_FAILURE);
+    }
+    return temp;
+}
+/*
+ *   "void freeInputTokenCalloc(char *caCleanInputTokens[])"
+ *   free memory allocated for clean tokens
+ */
+void freeInputTokenCalloc(char *caCleanInputTokens[]){
+    
+    int i = 0;
+    // check each array index for non null strings
+    for (i = 0; i < m_nCleanInputTokens ; i++) {
+        if (caCleanInputTokens[i] != NULL) {
+            // free the memory allocated to avoid seg fault
+            free(caCleanInputTokens[i] );
+        }
+        
+    }
+    
+    
+}
 
 
