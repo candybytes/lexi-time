@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 
 //------------------ global constants and given constants by assigment -------
@@ -30,15 +31,18 @@
  */
 #define MAX_NUMBER_DIGITS 5                 // Defines how many digits an integer can have
 #define MAX_IDENTIFIER_LENGTH 11            // Defines how long an identifier string can be
-#define MAX_NAMERECORD_TABLE_LENGTH 1000    // Defines how many tokens can be read
+//#define MAX_NAMERECORD_TABLE_LENGTH 1000    // Defines how many tokens can be read
 #define MAX_FILES   4                       // Defines the count of files for input output
-int m_nCleanCount = 0;
+int m_nCleanCount = 0;                      // global variable to track count of characters in input
+int m_nNameRecords = 0;                     // global variable to track count of NameRecord in input
+#define MAX_PUNCT   13                      // maximum amount of special symbols
+#define MAX_STR     256                     // maximum length of strings
 
 
 //global strings for input output file names
 char *FNS[] = {"input.txt", "cleaninput.txt", "lexemetable.txt", "lexemelist.txt"};
 typedef enum {input_txt, cleaninput_txt, lexemetable_txt, lexemelist_txt} eFNS;
-
+// file pointer array
 FILE *m_FPS[MAX_FILES];
 
 //------------------------- global data structures ------------------------
@@ -66,7 +70,10 @@ typedef struct {
 //  reserved words
 char *word[] = {"null", "begin", "call", "const", "do", "else", "end", "if", "odd", "procedure", "read", "then", "var", "while", "write" };
 //  reserved words numerical representation from the token_type enum
-int wsym[] = { nulsym, beginsym, callsym, constsym, dosym, elsesym, endsym, ifsym, oddsym, procsym, readsym, thensym, varsym, whilesym, writesym};
+int m_naWsym[] = { nulsym, beginsym, callsym, constsym, dosym, elsesym, endsym, ifsym, oddsym, procsym, readsym, thensym, varsym, whilesym, writesym};
+
+char m_caSpecialSymbols[] = {'+', '-', '*', '/', '(', ')', '=', ',' , '.', '<', '>', ';', ':'};
+
 
 
 
@@ -79,6 +86,9 @@ int charCount(FILE *fp);
 void readInput(FILE *fp, char foo[]);
 void fileReadError(char fileName[], int reading);
 void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]);
+int charType(char c);
+void splitInputTokens(char cleanSrc[]);
+int isSpecialChar(char c);
 
 
 
@@ -133,13 +143,18 @@ int main(int argc, char *argv[]) {
     // close the -clean input- file
     fclose(cifp);
     
+    // there will be at most m_nCleanCount separate string tokens
+    char *caCleanInputTokens[m_nCleanCount];
     
     //----------test print---------//
-    i = 0;
-    while (cleanCode[i] != EOF) {
-        printf("%c\n", cleanCode[i] );
-        i++;
-    }
+    splitInputTokens(cleanCode);
+    /*
+     i = 0;
+     while (cleanCode[i] != EOF) {
+     printf("char %c is type %d\n", cleanCode[i], charType(cleanCode[i]));
+     i++;
+     }
+     */
     //----------test print end---------//
     
     
@@ -284,6 +299,7 @@ void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]){
         }
         
         if (p) {
+            // print character to file
             fprintf( fp, "%c", src[i] );
             // copy input code without comments into new array
             cleanSrc[ m_nCleanCount++] = src[i];
@@ -320,8 +336,94 @@ void fileReadError(char fileName[], int writing ){
     
 }
 
+/*
+ *  "int charType(char c)"
+ *  return 0, 1, 2, 3 for the character type
+ *  0 for neither, 1 for numerical, 2 for letter, 3 for punctiation
+ */
+int charType(char c){
+    // is c a number
+    if (isdigit(c)) {
+        return 1;
+    }
+    // is c a letter
+    if (isalpha(c)) {
+        return 2;
+    }
+    // is c a punctuation
+    if (ispunct(c)) {
+        return 3;
+    }
+    // else default, return 0, is neither of the three types
+    return 0;
+}
 
+/*
+ *   "void splitInputTokens(char cleanSrc[])"
+ *   split clean source code into tokens
+ */
 
+void splitInputTokens(char cleanSrc[]){
+    
+    int i = 0;
+    int j = 0;
+    int newTkn = 0;
+    char tkn[MAX_STR] = " ";
+    int tokens = 0;
+    
+    
+    while (i <= m_nCleanCount ) {
+        
+        // if this is a non empty character, store it into local token array
+        if (charType(cleanSrc[i])) {
+            // increase both token index and cleanSrc index
+            tkn[j++] = cleanSrc[i++];
+        }
+        // check if this is a new line or space (empty character)
+        if (charType(cleanSrc[i]) == 0) {
+            // if at least one chacter is in local token array, print it and reset token
+            if(j) {
+                // --- replace with storing into structure of some kind
+                printf("token %s\n", tkn);
+            }
+            // increase cleanSrc index
+            i++;
+            // reset local token array
+            memset(tkn, 0, sizeof(tkn));
+            j = 0;
+            // skip code beyond here and continue to next character
+            continue;
+        }
+        // if this is a special Symbol punctuation
+        if (isSpecialChar(cleanSrc[i])) {
+            // if at least one char is in local token
+            if (j) {
+                // print token --- replace with storing into structure of some kind
+                printf("token %s\n", tkn);
+            }
+            // reset the token string
+            memset(tkn, 0, sizeof(tkn));
+            // reset the token index
+            j = 0;
+        }
+        // check next character in the loop after all 3 if cases
+        
+    }
+    
+}
+/*
+ *   "isSpecialChar(char c)"
+ *   check if character passed is a special Symbol punctuation
+ */
+int isSpecialChar(char c){
+    int i = 0;
+    for (i = 0; i <= MAX_PUNCT ; i++) {
+        if (m_caSpecialSymbols[i] == c) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 
 
