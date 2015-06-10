@@ -38,6 +38,7 @@ int m_nNameRecords = 0;                     // global variable to track count of
 #define MAX_PUNCT   13                      // maximum amount of special symbols
 #define MAX_STR     256                     // maximum length of strings
 int m_nCleanInputTokens = 0;                // global variable to track count of clean tokens in input
+#define MAX_WORDS 15                        // define the number of reserved words
 
 
 //global strings for input output file names
@@ -72,8 +73,10 @@ typedef struct {
 char *word[] = {"null", "begin", "call", "const", "do", "else", "end", "if", "odd", "procedure", "read", "then", "var", "while", "write" };
 //  reserved words numerical representation from the token_type enum
 int m_naWsym[] = { nulsym, beginsym, callsym, constsym, dosym, elsesym, endsym, ifsym, oddsym, procsym, readsym, thensym, varsym, whilesym, writesym};
-
+// special punctuation symbols
 char m_caSpecialSymbols[] = {'+', '-', '*', '/', '(', ')', '=', ',' , '.', '<', '>', ';', ':'};
+// special punctuation symbols enumerator values
+int m_SpecSym[] = {plussym, minussym, multsym, slashsym, lparentsym, rparentsym, eqlsym, commasym, periodsym, lessym, gtrsym, semicolonsym, becomessym};
 
 
 
@@ -92,6 +95,7 @@ void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]);
 int isSpecialChar(char c);
 char *cleanInputTokenCalloc(int tknSize);
 void freeInputTokenCalloc(char *caCleanInputTokens[]);
+int isReserverdWord(char *str);
 
 
 
@@ -157,7 +161,8 @@ int main(int argc, char *argv[]) {
     
     //----------test print start---------//
     for (i = 0; i < m_nCleanInputTokens ; i++) {
-        printf("%s\n", caCleanInputTokens[i] );
+        printf("%s ", caCleanInputTokens[i] );
+        printf("is reserved %d\n", isReserverdWord(caCleanInputTokens[i]) ? 1 : 0);
     }
     printf("token count %d\n", m_nCleanInputTokens );
     
@@ -452,7 +457,8 @@ int isSpecialChar(char c){
     int i = 0;
     for (i = 0; i <= MAX_PUNCT ; i++) {
         if (m_caSpecialSymbols[i] == c) {
-            return 1;
+            // i+1 will be used to identify enum value later
+            return (i + 1);
         }
     }
     return 0;
@@ -485,6 +491,24 @@ void freeInputTokenCalloc(char *caCleanInputTokens[]){
         
     }
     
+    
+}
+
+/*
+ * "int isReserverdWord(char *str)"
+ * check is a string passed is a reserved word from the *word[] array
+ * if its reserved, it will return the index i + 1, else it will return 0
+ */
+int isReserverdWord(char *str){
+    
+    int i = 0;
+    for (i = 0; i < MAX_WORDS; i++) {
+        if(strcmp(str, word[i]) == 0){
+            // i+1 will be used to identify enum value later
+            return (i + 1);
+        }
+    }
+    return 0;
     
 }
 
