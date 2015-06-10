@@ -76,7 +76,7 @@ int m_naWsym[] = { nulsym, beginsym, callsym, constsym, dosym, elsesym, endsym, 
 // special punctuation symbols
 char m_caSpecialSymbols[] = {'+', '-', '*', '/', '(', ')', '=', ',' , '.', '<', '>', ';', ':'};
 // special punctuation symbols enumerator values
-int m_SpecSym[] = {plussym, minussym, multsym, slashsym, lparentsym, rparentsym, eqlsym, commasym, periodsym, lessym, gtrsym, semicolonsym, becomessym};
+int m_naSpecialSymbols[] = {plussym, minussym, multsym, slashsym, lparentsym, rparentsym, eqlsym, commasym, periodsym, lessym, gtrsym, semicolonsym, becomessym};
 
 
 
