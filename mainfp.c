@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
+// TO-DO write ctype functions, can not include <ctype.h> library
 #include <ctype.h>
 
 
@@ -39,6 +39,7 @@ int m_nNameRecords = 0;                     // global variable to track count of
 #define MAX_STR     256                     // maximum length of strings
 int m_nCleanInputTokens = 0;                // global variable to track count of clean tokens in input
 #define MAX_WORDS 15                        // define the number of reserved words
+#define MAX
 
 
 //global strings for input output file names
@@ -96,7 +97,8 @@ int isSpecialChar(char c);
 char *cleanInputTokenCalloc(int tknSize);
 void freeInputTokenCalloc(char *caCleanInputTokens[]);
 int isReserverdWord(char *str);
-
+//----test as of now
+void IdentifyInputToken(char *caCleanInputTokens[]); //----test as of now
 
 
 // -----------------Initial call to program  -----------------
@@ -160,11 +162,13 @@ int main(int argc, char *argv[]) {
     
     
     //----------test print start---------//
+    //for (i = 0; i < 0; i++) {
     for (i = 0; i < m_nCleanInputTokens ; i++) {
-        printf("%s ", caCleanInputTokens[i] );
-        printf("is reserved %d\n", isReserverdWord(caCleanInputTokens[i]) ? 1 : 0);
+        printf("%-12s ", caCleanInputTokens[i] );
+        printf("is reserved %-4d\n", isReserverdWord(caCleanInputTokens[i]) ? 1 : 0);
     }
-    printf("token count %d\n", m_nCleanInputTokens );
+    //printf("token count %d\n", m_nCleanInputTokens );
+    //IdentifyInputToken(caCleanInputTokens);
     
     //----------test print end-----------//
     
@@ -174,7 +178,7 @@ int main(int argc, char *argv[]) {
     // call freeInputTokenCalloc after finishing the use of the array
     freeInputTokenCalloc(caCleanInputTokens);
     
-    
+    ////// TO-D0-----write ctype functions, can not include <ctype.h> library
     ////// TO-D0-----check that each token is a valid token (char length, declaration, integer size, etc...)
     ////// TO-D0-----store token into array of namerecord_t;
     ////// TO-D0-----get info for each token to fill variables of namerecord_t;
@@ -412,7 +416,7 @@ void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]){
             tkn[j++] = cleanSrc[i++];
         }
         // check if this is a new line or space (empty character)
-        if (charType(cleanSrc[i]) == 0) {
+        if ( (charType(cleanSrc[i]) == 0 ) || isSpecialChar(cleanSrc[i])) {
             // if at least one chacter is in local token array, print it and reset token
             if(j) {
                 // allocate space for token, store token, increase token count
@@ -421,28 +425,18 @@ void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]){
                 m_nCleanInputTokens++;
                 
             }
-            // increase cleanSrc index
-            i++;
+            
             // reset local token array
             memset(tkn, 0, sizeof(tkn));
             j = 0;
-            // skip code beyond here and continue to next character
-            continue;
-        }
-        // if this is a special Symbol punctuation
-        if (isSpecialChar(cleanSrc[i])) {
-            // if at least one char is in local token
-            if (j) {
-                // allocate space for token, store token, increase token count
-                caCleanInputTokens[m_nCleanInputTokens] = cleanInputTokenCalloc(j);
-                strcpy(caCleanInputTokens[m_nCleanInputTokens], tkn);
-                m_nCleanInputTokens++;
-                
+            
+            // check if this is a new line or space (empty character)
+            if  (charType(cleanSrc[i]) == 0 ){
+                // increase cleanSrc index
+                i++;
+                // skip code beyond here and continue to next character
+                continue;
             }
-            // reset the token string
-            memset(tkn, 0, sizeof(tkn));
-            // reset the token index
-            j = 0;
         }
         // check next character in the loop after all 3 if cases
         
