@@ -169,12 +169,13 @@ int main(int argc, char *argv[]) {
     //for (i = 0; i < 0; i++) {
     // use these functions to build lexeme data structure
     // TO-D0 check for symbols groups (i.e >=, <=, < >, :=)
-    printf("%-11s%-10s%-10s%-10s\n","lexeme","reserved","numerical","variable");
+    printf("%-12s%-10s%-10s%-15s\n","lexeme","reserved","numerical","variable");
     for (i = 0; i < m_nCleanInputTokens ; i++) {
         printf("%-12s", caCleanInputTokens[i] );
         printf("%-10d", isReserverdWord(caCleanInputTokens[i]) ? 1 : 0);
-        printf("%-10d", (stringIsNumber(caCleanInputTokens[i]) != INVALID_INT) ? (int)stringIsNumber(caCleanInputTokens[i]) : 0);
-        printf("%-10d\n", isValidVariableAndNotReserved(caCleanInputTokens[i]) );
+        printf("%-3d", (stringIsNumber(caCleanInputTokens[i]) != INVALID_INT) ? 1 : 0);
+        printf("%-7d", (stringIsNumber(caCleanInputTokens[i]) != INVALID_INT) ? (int)stringIsNumber(caCleanInputTokens[i]) : -7777);
+        printf("%-15d\n", isValidVariableAndNotReserved(caCleanInputTokens[i]) );
         
         
     }
