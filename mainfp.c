@@ -39,10 +39,12 @@ int m_nNameRecords = 0;                     // global variable to track count of
 #define MAX_STR     256                     // maximum length of strings
 int m_nCleanInputTokens = 0;                // global variable to track count of clean tokens in input
 #define MAX_WORDS 15                        // define the number of reserved words
-#define MAX
+#define INVALID_INT 2147483647              // define the long_max int value in case number string is invalid
+#define MAX_VAR_LEN 11                      // defines the masx length of a normal variable
 
 
 //global strings for input output file names
+char *LBLS[] = {"lexeme", "token type"};
 char *FNS[] = {"input.txt", "cleaninput.txt", "lexemetable.txt", "lexemelist.txt"};
 typedef enum {input_txt, cleaninput_txt, lexemetable_txt, lexemelist_txt} eFNS;
 // file pointer array
@@ -99,6 +101,8 @@ void freeInputTokenCalloc(char *caCleanInputTokens[]);
 int isReserverdWord(char *str);
 //----test as of now
 void IdentifyInputToken(char *caCleanInputTokens[]); //----test as of now
+long stringIsNumber(char *str);
+int isValidVariableAndNotReserved(char *str);
 
 
 // -----------------Initial call to program  -----------------
@@ -163,9 +167,16 @@ int main(int argc, char *argv[]) {
     
     //----------test print start---------//
     //for (i = 0; i < 0; i++) {
+    // use these functions to build lexeme data structure
+    // TO-D0 check for symbols groups (i.e >=, <=, < >, :=)
+    printf("%-11s%-10s%-10s%-10s\n","lexeme","reserved","numerical","variable");
     for (i = 0; i < m_nCleanInputTokens ; i++) {
-        printf("%-12s ", caCleanInputTokens[i] );
-        printf("is reserved %-4d\n", isReserverdWord(caCleanInputTokens[i]) ? 1 : 0);
+        printf("%-12s", caCleanInputTokens[i] );
+        printf("%-10d", isReserverdWord(caCleanInputTokens[i]) ? 1 : 0);
+        printf("%-10d", (stringIsNumber(caCleanInputTokens[i]) != INVALID_INT) ? (int)stringIsNumber(caCleanInputTokens[i]) : 0);
+        printf("%-10d\n", isValidVariableAndNotReserved(caCleanInputTokens[i]) );
+        
+        
     }
     //printf("token count %d\n", m_nCleanInputTokens );
     //IdentifyInputToken(caCleanInputTokens);
@@ -505,5 +516,112 @@ int isReserverdWord(char *str){
     return 0;
     
 }
+
+/*
+ *   "long stringIsNumber(char *str);"
+ *   check if string is numerical, it will not check if its of 5 digits
+ *   we need to know if it is a number regardless of legth
+ *   a false (false return) would interfere with other checks, i.e. variable check
+ */
+
+long stringIsNumber(char *str){
+    
+    
+    int i = 0;
+    // base case check for null
+    if (str == NULL) {
+        return INVALID_INT;
+    }
+    // get the string length
+    int len = strlen(str);
+    // if any of the string characters is not a numerical, then string is not numerical
+    // return a defined invalid int value
+    for (i = 0; i < len; i++) {
+        if (isdigit(str[i]) == 0) {
+            return INVALID_INT;
+        }
+    }
+    // if the string is numerical, then return the numerical value
+    // transform string to a long
+    return strtol(str, (char **)NULL, 10);
+    
+}
+/*
+ *   "int isValidVariable(char *str)"
+ *   check if string of valid length, does not start with number or symbol
+ *   does not contain symbols in the middle, special symbols have been check by now
+ */
+int isValidVariableAndNotReserved(char *str){
+    
+    int i = 0;
+    // base case check for null or is a reserved word or is numerical
+    if (str == NULL || isReserverdWord(str) || (stringIsNumber(str) != INVALID_INT)) {
+        return 0;
+    }
+    
+    // get the string length
+    int len = strlen(str);
+    
+    // all base cases have already been check before checking if first char is a digit
+    if (isdigit(str[0]) || ispunct(str[0]) || len > MAX_VAR_LEN) {
+        return 0;
+    }
+    
+    return 1;
+}
+
+
+
+
+
+//----test as of now
+// This method is being built, testing, testing, testing.......
+/*
+ void IdentifyInputToken(char *caCleanInputTokens[]){
+ int i = 0;
+ int x = 0;
+ int y = 0;
+ int tknLen = 0;
+ 
+ for (i = 0; i < m_nCleanInputTokens ; i++) {
+ char *str = caCleanInputTokens[i];
+ tknLen = strlen(str);
+ if (tknLen > 1) {
+ // check first if it is a reserved word
+ y = 0;
+ x = 0;
+ x = isReserverdWord(str);
+ if (x) {
+ printf("lexeme: %-12s token type: %-4d\n", str, m_naWsym[(x - 1)] );
+ } else {
+ // check if token is ( number or  variable ) legal size, if variable, that no punctuation exist on it
+ }
+ 
+ } else {
+ // token length is 1, token could be variable or numerical or symbol
+ x = 0;
+ x = isSpecialChar(str[0]);
+ if (x) {
+ // if it is a special character, check if is a combo pucntuation
+ // i.e > =, < =, < >, := , check for 4 cases
+ switch ((m_naSpecialSymbols[(x - 1)])) {
+ case gtrsym:
+ case lessym:
+ case becomessym:
+ y = 1;
+ break;
+ default:
+ break;
+ }
+ printf("lexeme: %-12s token type: %-4d\n", str, m_naSpecialSymbols[(x - 1)] );
+ } else {
+ // check if it is a numerical value
+ }
+ }
+ }
+ }
+ */
+
+
 
 
