@@ -17,9 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 // TO-DO write ctype functions, can not include <ctype.h> library
-// Update: functions written, file header declaration commented out
-
-// #include <ctype.h>
+#include <ctype.h>
 
 
 //------------------ global constants and given constants by assigment -------
@@ -54,26 +52,23 @@ FILE *m_FPS[MAX_FILES];
 
 //------------------------- global data structures ------------------------
 // enumerator of the symbols
-typedef enum
-{
+typedef enum {
     nulsym = 1, identsym, numbersym, plussym, minussym, multsym,
     slashsym, oddsym, eqlsym, neqsym, lessym, leqsym,
     gtrsym, geqsym, lparentsym, rparentsym, commasym, semicolonsym,
     periodsym, becomessym, beginsym, endsym, ifsym, thensym,
     whilesym, dosym, callsym, constsym, varsym, procsym,
-    writesym, readsym, elsesym
-} token_type;
+    writesym, readsym, elsesym } token_type;
 
 //structure of the symbol table record
-typedef struct
-{
-
+typedef struct {
+    
     int kind;           // constant = 1; var = 2, proc = 3
     char name[12];      // name up to 11 characters long, 11 + 1 for \0
     int val;            // number (ASCII value)
     int level;          // L level
     int adr;            // M address
-
+    
 } namerecord_t;
 
 
@@ -106,7 +101,7 @@ void freeInputTokenCalloc(char *caCleanInputTokens[]);
 int isReserverdWord(char *str);
 //----test as of now
 void IdentifyInputToken(char *caCleanInputTokens[]); //----test as of now
-long stringIsNumber(char *str);
+int stringIsNumber(char *str);
 int isValidVariableAndNotReserved(char *str);
 
 //--- Replacement functions for ctype.h. Name changed slightly to avoid conflicting names -----// Added 6/12/2015
@@ -117,20 +112,18 @@ int isPunct(char c);
 
 
 // -----------------Initial call to program  -----------------
-int main(int argc, char *argv[])
-{
-
+int main(int argc, char *argv[]) {
+    
     // if a file name for input is passed
     // use that name instead of the default in
     // FNS[0] = input.txt
-
+    
     int i = 0;
-
-    if(argc > 1)
-    {
+    
+    if(argc > 1) {
         FNS[input_txt] = argv[1];
     }
-
+    
     // create file pointers for input output
     // createFilePointers handles null pointer exception
     createFilePointers();
@@ -138,39 +131,37 @@ int main(int argc, char *argv[])
     FILE *ifp = m_FPS[input_txt];
     // copy clean input file pointer
     FILE *cifp = m_FPS[cleaninput_txt];
-
-
+    
+    
     // how many characters in file
     int count = charCount(ifp);
-    if (count < 0)
-    {
+    if (count < 0) {
         fileReadError(FNS[input_txt], input_txt);
         // this is fatal error
         exit(EXIT_FAILURE);
     }
-
+    
     char code[count];
     // cleanCode will have input without comments
     char cleanCode[count];
     // initialize code arrays
-    for (i = 0; i < count; i++)
-    {
+    for (i = 0; i < count; i++) {
         code[i] = ' ';
         cleanCode[i] = ' ';
     }
-
+    
     // read input file into array code[]
     readInput(ifp, code);
     // close the input file
     fclose(ifp);
-
-
+    
+    
     // remove comments from input
     //cleanCode[] will contain -comments free- input
     cleanInput(cifp, code, count, cleanCode);
     // close the -clean input- file
     fclose(cifp);
-
+    
     // there will be at most m_nCleanCount separate string tokens
     char *caCleanInputTokens[m_nCleanCount];
     // separate cleanCode into tokens, allocate space as needed with calloc
@@ -178,33 +169,31 @@ int main(int argc, char *argv[])
     // if caCleanInputTokens[] is not null, free it before exiting program
     // or after printing it to file
     splitInputTokens(cleanCode, caCleanInputTokens);
-
-
+    
+    
     //----------test print start---------//
     //for (i = 0; i < 0; i++) {
     // use these functions to build lexeme data structure
     // TO-D0 check for symbols groups (i.e >=, <=, < >, :=)
-    printf("%-11s%-10s%-10s%-10s\n","lexeme","reserved","numerical","variable");
-    for (i = 0; i < m_nCleanInputTokens ; i++)
-    {
+    printf("%-12s%-10s%-10s%-10s\n","lexeme","reserved","numerical","variable");
+    for (i = 0; i < m_nCleanInputTokens ; i++) {
         printf("%-12s", caCleanInputTokens[i] );
         printf("%-10d", isReserverdWord(caCleanInputTokens[i]) ? 1 : 0);
-        printf("%-10d", (stringIsNumber(caCleanInputTokens[i]) != INVALID_INT) ? (int)stringIsNumber(caCleanInputTokens[i]) : 0);
+        printf("%-10d", stringIsNumber(caCleanInputTokens[i]) );
         printf("%-10d\n", isValidVariableAndNotReserved(caCleanInputTokens[i]) );
-
-
+        
     }
-    //printf("token count %d\n", m_nCleanInputTokens );
-    //IdentifyInputToken(caCleanInputTokens);
-
+    printf("token count %d\n\n\n", m_nCleanInputTokens );
+    IdentifyInputToken(caCleanInputTokens);
+    
     //----------test print end-----------//
-
+    
     ////// TO-D0-----some stuff from list bellow will go here
-
-
+    
+    
     // call freeInputTokenCalloc after finishing the use of the array
     freeInputTokenCalloc(caCleanInputTokens);
-
+    
     ////// TO-D0-----write ctype functions, can not include <ctype.h> library
     ////// TO-D0-----check that each token is a valid token (char length, declaration, integer size, etc...)
     ////// TO-D0-----store token into array of namerecord_t;
@@ -212,15 +201,15 @@ int main(int argc, char *argv[])
     ////// TO-D0-----print namerecord_t array records (tokens, and tokens values)
     ////// TO-D0-----close the last two file pointers created by createFilePointers();
     ////// TO-D0-----celebrate this assigment is awesome and done;
-
-
+    
+    
     // replace file pointers by knicnames created just like in line 115 and 117
     // knicknames for file pointers examples FILE *ifp = m_FPS[input_txt];
     // file pointer is already open and active, knickname is local
     fclose(m_FPS[lexemetable_txt]);
     fclose(m_FPS[lexemelist_txt]);
-
-
+    
+    
     return 0;
 }
 
@@ -231,26 +220,22 @@ int main(int argc, char *argv[])
  * handle null pointer exeptions immediatly
  */
 
-void createFilePointers()
-{
-
+void createFilePointers(){
+    
     char *mode = "r";
     int i = 0;
-    for (i = 0; i < MAX_FILES; i++)
-    {
+    for (i = 0; i < MAX_FILES; i++) {
         // initialize the file pointer array index
         m_FPS[i] = NULL;
-
-        if (i)
-        {
+        
+        if (i) {
             mode = "w";
         }
         // if file pointer fails to open filename
         // then a null is stored into array
         FILE *fp = NULL;
         fp = fopen(FNS[i], mode);
-        if (fp == NULL)
-        {
+        if (fp == NULL) {
             fileReadError(FNS[i], i);
         }
         m_FPS[i] = fp;
@@ -264,48 +249,43 @@ void createFilePointers()
  * return an integer , count of characters
  *
  */
-int charCount(FILE *fp)
-{
-
+int charCount(FILE *fp){
+    
     long off_end;
     int rc;
     size_t fSize;
     int c;
     char lett;
     int i = 0;
-
+    
     // if the file pointer is null return error
-    if (fp != NULL)
-    {
-
+    if (fp != NULL) {
+        
         // go to end of file
         rc = fseek(fp, 0L, SEEK_END);
-        if (rc != 0)
-        {
+        if (rc != 0) {
             // error ocurred
             return -1;
         }
         // Byte offset to the end of the file (size)
-        if (0 > ( off_end = ftell(fp) ) )
-        {
+        if (0 > ( off_end = ftell(fp) ) ){
             return -1;
         }
-
+        
         fSize = (size_t)off_end;
         // reset the file reader pointer to the begining of the file
         rc = 0;
         rc = fseek(fp, 0L, SEEK_SET);
-        if (rc != 0)
-        {
+        if (rc != 0) {
             // error ocurred
             return -1;
         }
         // return the count of characters in the input file
         return (int)fSize;
     }
-
+    
     return -1;
-
+    
 }
 
 /**
@@ -315,62 +295,52 @@ int charCount(FILE *fp)
  *
  */
 
-void readInput(FILE *fp, char src[])
-{
-
+void readInput(FILE *fp, char src[]){
+    
     int i = 0;
     int c;
     int rc = 0;
-
-    if (fp == NULL || src == NULL)
-    {
+    
+    if (fp == NULL || src == NULL) {
         //if the file pointer or the char array is null, return error
         return;
     }
-
+    
     // declare char array to store file input
-
+    
     // return to the begining of file reader pointer
     rc = fseek(fp, 0L, SEEK_SET);
-    if (rc != 0)
-    {
+    if (rc != 0) {
         // error ocurred
         fileReadError(FNS[input_txt], input_txt);
         // this is a fatal error
         exit(EXIT_FAILURE);
     }
     // store each character into -array passed- from main
-    while ( (c = fgetc(fp)) != EOF )
-    {
+    while ( (c = fgetc(fp)) != EOF ){
         src[i++] = c;
     }
-
+    
     return;
 }
 
-void cleanInput(FILE *fp, char src[], int count, char cleanSrc[])
-{
-
+void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]){
+    
     int p = 1;
     int i = 0;
-
-    while (i < count)
-    {
+    
+    while (i < count) {
         // check if this is the begiining of a comment block
-        if (src[i] == '/' && p == 1)
-        {
-            if (src[i + 1] == '*')
-            {
+        if (src[i] == '/' && p == 1) {
+            if (src[i + 1] == '*') {
                 // set print to false and skip the initial comment "/*" signal
                 p = 0;
                 i += 2;
             }
         }
         // check if this is the end of a comment block
-        if (src[i] == '*' && p == 0)
-        {
-            if (src[i + 1] == '/')
-            {
+        if (src[i] == '*' && p == 0) {
+            if (src[i + 1] == '/') {
                 // set print to true and skip the ending comment "*/" signal
                 p = 1;
                 i += 2;
@@ -379,27 +349,25 @@ void cleanInput(FILE *fp, char src[], int count, char cleanSrc[])
                 continue;
             }
         }
-
-        if (p)
-        {
+        
+        if (p) {
             // print character to file
             fprintf( fp, "%c", src[i] );
             // copy input code without comments into new array
             cleanSrc[ m_nCleanCount++] = src[i];
         }
-
+        
         i++;
-
+        
     }
     // check if file only contains a comment opening statement
-    if (p == 0)
-    {
+    if (p == 0){
         printf("ERROR, input file contains a open ended comment line\n");
         exit(EXIT_FAILURE);
     }
     // reset the end of file for clean code array
     cleanSrc[m_nCleanCount] = EOF;
-
+    
 }
 
 /**
@@ -408,18 +376,16 @@ void cleanInput(FILE *fp, char src[], int count, char cleanSrc[])
  * if int reading = 1, then print reading, else reading = 0 = writing
  *
  */
-void fileReadError(char fileName[], int writing )
-{
-
+void fileReadError(char fileName[], int writing ){
+    
     int i = 1;
-    if (writing)
-    {
+    if (writing) {
         i = 0;
     }
     char *str[] = {"writing", "reading"};
     printf("Warning!, Could not open the file %s for %s\n", fileName, str[i]);
     return;
-
+    
 }
 
 /*
@@ -427,21 +393,17 @@ void fileReadError(char fileName[], int writing )
  *  return 0, 1, 2, 3 for the character type
  *  0 for neither, 1 for numerical, 2 for letter, 3 for punctuation
  */
-int charType(char c)
-{
+int charType(char c){
     // is c a number
-    if (isDigit(c))
-    {
+    if (isdigit(c)) {
         return 1;
     }
     // is c a letter
-    if (isAlpha(c))
-    {
+    if (isalpha(c)) {
         return 2;
     }
     // is c a punctuation
-    if (isPunct(c))
-    {
+    if (ispunct(c)) {
         return 3;
     }
     // else default, return 0, is neither of the three types
@@ -453,45 +415,39 @@ int charType(char c)
  *   split clean source code into tokens
  */
 
-void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[])
-{
-
+void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]){
+    
     int i = 0;
     int j = 0;
     //int newTkn = 0;
     char tkn[MAX_STR] = " ";
     //int tokens = 0;
-
-
-    while (i <= m_nCleanCount )
-    {
-
+    
+    
+    while (i <= m_nCleanCount ) {
+        
         // if this is a non empty character, store it into local token array
-        if (charType(cleanSrc[i]))
-        {
+        if (charType(cleanSrc[i])) {
             // increase both token index and cleanSrc index
             tkn[j++] = cleanSrc[i++];
         }
         // check if this is a new line or space (empty character)
-        if ( (charType(cleanSrc[i]) == 0 ) || isSpecialChar(cleanSrc[i]))
-        {
+        if ( (charType(cleanSrc[i]) == 0 ) || isSpecialChar(cleanSrc[i])) {
             // if at least one chacter is in local token array, print it and reset token
-            if(j)
-            {
+            if(j) {
                 // allocate space for token, store token, increase token count
                 caCleanInputTokens[m_nCleanInputTokens] = cleanInputTokenCalloc(j);
                 strcpy(caCleanInputTokens[m_nCleanInputTokens], tkn);
                 m_nCleanInputTokens++;
-
+                
             }
-
+            
             // reset local token array
             memset(tkn, 0, sizeof(tkn));
             j = 0;
-
+            
             // check if this is a new line or space (empty character)
-            if  (charType(cleanSrc[i]) == 0 )
-            {
+            if  (charType(cleanSrc[i]) == 0 ){
                 // increase cleanSrc index
                 i++;
                 // skip code beyond here and continue to next character
@@ -499,21 +455,18 @@ void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[])
             }
         }
         // check next character in the loop after all 3 if cases
-
+        
     }
-
+    
 }
 /*
  *   "isSpecialChar(char c)"
  *   check if character passed is a special Symbol punctuation
  */
-int isSpecialChar(char c)
-{
+int isSpecialChar(char c){
     int i = 0;
-    for (i = 0; i <= MAX_PUNCT ; i++)
-    {
-        if (m_caSpecialSymbols[i] == c)
-        {
+    for (i = 0; i <= MAX_PUNCT ; i++) {
+        if (m_caSpecialSymbols[i] == c) {
             // i+1 will be used to identify enum value later
             return (i + 1);
         }
@@ -524,11 +477,9 @@ int isSpecialChar(char c)
  *   "char *cleanInputTokenCalloc(int tknSize)"
  *   allocate memory for caCleanInputTokens[index] strings
  */
-char *cleanInputTokenCalloc(int tknSize)
-{
-    char *temp = calloc(tknSize, sizeof(char));
-    if (temp == NULL)
-    {
+char *cleanInputTokenCalloc(int tknSize){
+    char *temp = calloc(tknSize + 1, sizeof(char));
+    if (temp == NULL) {
         printf("Error using calloc to create space for token string\n");
         exit(EXIT_FAILURE);
     }
@@ -538,22 +489,19 @@ char *cleanInputTokenCalloc(int tknSize)
  *   "void freeInputTokenCalloc(char *caCleanInputTokens[])"
  *   free memory allocated for clean tokens
  */
-void freeInputTokenCalloc(char *caCleanInputTokens[])
-{
-
+void freeInputTokenCalloc(char *caCleanInputTokens[]){
+    
     int i = 0;
     // check each array index for non null strings
-    for (i = 0; i < m_nCleanInputTokens ; i++)
-    {
-        if (caCleanInputTokens[i] != NULL)
-        {
+    for (i = 0; i < m_nCleanInputTokens ; i++) {
+        if (caCleanInputTokens[i] != NULL) {
             // free the memory allocated to avoid seg fault
             free(caCleanInputTokens[i] );
         }
-
+        
     }
-
-
+    
+    
 }
 
 /*
@@ -561,20 +509,17 @@ void freeInputTokenCalloc(char *caCleanInputTokens[])
  * check is a string passed is a reserved word from the *word[] array
  * if its reserved, it will return the index i + 1, else it will return 0
  */
-int isReserverdWord(char *str)
-{
-
+int isReserverdWord(char *str){
+    
     int i = 0;
-    for (i = 0; i < MAX_WORDS; i++)
-    {
-        if(strcmp(str, word[i]) == 0)
-        {
+    for (i = 0; i < MAX_WORDS; i++) {
+        if(strcmp(str, word[i]) == 0){
             // i+1 will be used to identify enum value later
             return (i + 1);
         }
     }
     return 0;
-
+    
 }
 
 /*
@@ -584,124 +529,177 @@ int isReserverdWord(char *str)
  *   a false (false return) would interfere with other checks, i.e. variable check
  */
 
-long stringIsNumber(char *str)
-{
-
-
+int stringIsNumber(char *str){
+    
+    
     int i = 0;
     // base case check for null
-    if (str == NULL)
-    {
-        return INVALID_INT;
+    if (str == NULL) {
+        return 0;
     }
     // get the string length
     int len = strlen(str);
     // if any of the string characters is not a numerical, then string is not numerical
     // return a defined invalid int value
-    for (i = 0; i < len; i++)
-    {
-        if (isDigit(str[i]) == 0)
-        {
-            return INVALID_INT;
+    for (i = 0; i < len; i++) {
+        if (charType(str[i]) != 1) {
+            return 0;
         }
     }
-    // if the string is numerical, then return the numerical value
-    // transform string to a long
-    return strtol(str, (char **)NULL, 10);
-
+    
+    // if string is numerical, but has more than 5 digits, exit error
+    if (len > 5) {
+        printf("Error, string: %s is numerical, but it has more than 5 digits\n", str);
+        exit(EXIT_FAILURE);
+    }
+    
+    // if the string is numerical, then return 1
+    //strtol(str, (char **)NULL, 10)
+    return 1;
+    
 }
 /*
  *   "int isValidVariable(char *str)"
  *   check if string of valid length, does not start with number or symbol
  *   does not contain symbols in the middle, special symbols have been check by now
  */
-int isValidVariableAndNotReserved(char *str)
-{
-
-    int i = 0;
+int isValidVariableAndNotReserved(char *str){
+    
     // base case check for null or is a reserved word or is numerical
-    if (str == NULL || isReserverdWord(str) || (stringIsNumber(str) != INVALID_INT))
-    {
+    if (str == NULL || isReserverdWord(str) || stringIsNumber(str)) {
         return 0;
     }
-
+    
     // get the string length
     int len = strlen(str);
-
-    // all base cases have already been check before checking if first char is a digit
-    if (isDigit(str[0]) || isPunct(str[0]) || len > MAX_VAR_LEN)
-    {
-        return 0;
+    
+    // is token a punctuation or symbol
+    if (len == 1) {
+        if (charType(str[0]) == 3){
+            return 0;
+        }
     }
-
+    
+    // does variable start with a letter, or is of legal size
+    if ((charType(str[0]) != 2) || len > MAX_VAR_LEN ) {
+        return 0; //  remove this line later
+        /*/ add this section after completing testing of method _____________________
+         printf("Error, variable %s is invalid\n", str);
+         exit(EXIT_FAILURE);
+         */ //_______________________________________________________________________
+    }
+    
+    // at this point, isnumber, is symbol, is reservedword, is special char have all been checked
+    
     return 1;
 }
 
+void IdentifyInputToken(char *caCleanInputTokens[]){
+    
+    int ss = 0;
+    int rw = 0;
+    int tknlen = 0;
+    int i = 0;
+    
+    for (i = 0; i < m_nCleanInputTokens ; i++) {
+        
+        char *str = caCleanInputTokens[i];
+        tknlen = strlen(str);
+        
+        // check if it is a reserved word
+        if ( ( rw = isReserverdWord(str) ) && tknlen > 1 ){
+            printf("%-25s %-12s token type: %-4d\n","reserved word lexeme:", str, m_naWsym[(rw - 1)] );
+            continue;
+        }
+        
+        // check if token is number
+        if  (stringIsNumber(str)){
+            printf("%-25s %-12s token type: %-4d\n","number lexeme:", str, 3 );
+            continue;
+        }
+        
+        // check if token is variable
+        if  (isValidVariableAndNotReserved(str)){
+            printf("%-25s %-12s token type: %-4d\n","variable lexeme", str, 2 );
+            continue;
+        }
+        
+        // check if token special symbol
+        if  ( ( ss = isSpecialChar(str[0]) ) && tknlen == 1 ){
+            printf("%-25s %-12s token type: %-4d\n","spec char lexeme:", str, m_naSpecialSymbols[(ss - 1)] );
+            continue;
+        }
+    }
+    
+    
+}
+
+// ctype functions are not being used right now
 int isAlpha(char c)
 {
     // We are assuming all characters in the program are lowercase as specified by Pawel
     switch(c)
     {
-    // Compact notation used for switch cases to save space
-    case 'a':
-    case 'b':
-    case 'c':
-    case 'd':
-    case 'e':
-    case 'f':
-    case 'g':
-    case 'h':
-    case 'i':
-    case 'j':
-    case 'k':
-    case 'l':
-    case 'm':
-    case 'n':
-    case 'o':
-    case 'p':
-    case 'q':
-    case 'r':
-    case 's':
-    case 't':
-    case 'u':
-    case 'v':
-    case 'w':
-    case 'x':
-    case 'y':
-    case 'z':
-    // Just in case the person grading the program is a total jerk
-    case 'A':
-    case 'B':
-    case 'C':
-    case 'D':
-    case 'E':
-    case 'F':
-    case 'G':
-    case 'H':
-    case 'I':
-    case 'J':
-    case 'K':
-    case 'L':
-    case 'M':
-    case 'N':
-    case 'O':
-    case 'P':
-    case 'Q':
-    case 'R':
-    case 'S':
-    case 'T':
-    case 'U':
-    case 'V':
-    case 'W':
-    case 'X':
-    case 'Y':
-    case 'Z':
-        return 1;
-        break;
-
-    default:
-        return 0;
-        break;
+            // Compact notation used for switch cases to save space
+        case 'a':
+        case 'b':
+        case 'c':
+        case 'd':
+        case 'e':
+        case 'f':
+        case 'g':
+        case 'h':
+        case 'i':
+        case 'j':
+        case 'k':
+        case 'l':
+        case 'm':
+        case 'n':
+        case 'o':
+        case 'p':
+        case 'q':
+        case 'r':
+        case 's':
+        case 't':
+        case 'u':
+        case 'v':
+        case 'w':
+        case 'x':
+        case 'y':
+        case 'z':
+            // Just in case the person grading the program is a total jerk
+        case 'A':
+        case 'B':
+        case 'C':
+        case 'D':
+        case 'E':
+        case 'F':
+        case 'G':
+        case 'H':
+        case 'I':
+        case 'J':
+        case 'K':
+        case 'L':
+        case 'M':
+        case 'N':
+        case 'O':
+        case 'P':
+        case 'Q':
+        case 'R':
+        case 'S':
+        case 'T':
+        case 'U':
+        case 'V':
+        case 'W':
+        case 'X':
+        case 'Y':
+        case 'Z':
+            return 1;
+            break;
+            
+        default:
+            return 0;
+            break;
     }
 }
 
@@ -710,22 +708,22 @@ int isDigit(char c)
 {
     switch(c)
     {
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-        return 1;
-        break;
-
-    default:
-        return 0;
-        break;
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            return 1;
+            break;
+            
+        default:
+            return 0;
+            break;
     }
 }
 
@@ -733,70 +731,21 @@ int isPunct(char c)
 {
     switch(c)
     {
-    case '.':
-    case ',':
-    case '!':
-    case '?':
-    case ';':
-        return 1;
-        break;
-
-    default:
-        return 0;
-        break;
+        case '.':
+        case ',':
+        case '!':
+        case '?':
+        case ';':
+            return 1;
+            break;
+            
+        default:
+            return 0;
+            break;
     }
 }
 
 
-
-
-//----test as of now
-// This method is being built, testing, testing, testing.......
-/*
- void IdentifyInputToken(char *caCleanInputTokens[]){
- int i = 0;
- int x = 0;
- int y = 0;
- int tknLen = 0;
-
- for (i = 0; i < m_nCleanInputTokens ; i++) {
- char *str = caCleanInputTokens[i];
- tknLen = strlen(str);
- if (tknLen > 1) {
- // check first if it is a reserved word
- y = 0;
- x = 0;
- x = isReserverdWord(str);
- if (x) {
- printf("lexeme: %-12s token type: %-4d\n", str, m_naWsym[(x - 1)] );
- } else {
- // check if token is ( number or  variable ) legal size, if variable, that no punctuation exist on it
- }
-
- } else {
- // token length is 1, token could be variable or numerical or symbol
- x = 0;
- x = isSpecialChar(str[0]);
- if (x) {
- // if it is a special character, check if is a combo pucntuation
- // i.e > =, < =, < >, := , check for 4 cases
- switch ((m_naSpecialSymbols[(x - 1)])) {
- case gtrsym:
- case lessym:
- case becomessym:
- y = 1;
- break;
- default:
- break;
- }
- printf("lexeme: %-12s token type: %-4d\n", str, m_naSpecialSymbols[(x - 1)] );
- } else {
- // check if it is a numerical value
- }
- }
- }
- }
- */
 
 
 
