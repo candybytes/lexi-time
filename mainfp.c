@@ -101,7 +101,7 @@ void freeInputTokenCalloc(char *caCleanInputTokens[]);
 int isReserverdWord(char *str);
 //----test as of now
 void IdentifyInputToken(char *caCleanInputTokens[]); //----test as of now
-long stringIsNumber(char *str);
+int stringIsNumber(char *str);
 int isValidVariableAndNotReserved(char *str);
 
 
@@ -169,14 +169,12 @@ int main(int argc, char *argv[]) {
     //for (i = 0; i < 0; i++) {
     // use these functions to build lexeme data structure
     // TO-D0 check for symbols groups (i.e >=, <=, < >, :=)
-    printf("%-12s%-10s%-10s%-15s\n","lexeme","reserved","numerical","variable");
+    printf("%-12s%-10s%-10s%-10s\n","lexeme","reserved","numerical","variable");
     for (i = 0; i < m_nCleanInputTokens ; i++) {
         printf("%-12s", caCleanInputTokens[i] );
         printf("%-10d", isReserverdWord(caCleanInputTokens[i]) ? 1 : 0);
-        printf("%-3d", (stringIsNumber(caCleanInputTokens[i]) != INVALID_INT) ? 1 : 0);
-        printf("%-7d", (stringIsNumber(caCleanInputTokens[i]) != INVALID_INT) ? (int)stringIsNumber(caCleanInputTokens[i]) : -7777);
-        printf("%-15d\n", isValidVariableAndNotReserved(caCleanInputTokens[i]) );
-        
+        printf("%-10d", stringIsNumber(caCleanInputTokens[i]) );
+        printf("%-10d\n", isValidVariableAndNotReserved(caCleanInputTokens[i]) );
         
     }
     //printf("token count %d\n", m_nCleanInputTokens );
@@ -525,13 +523,13 @@ int isReserverdWord(char *str){
  *   a false (false return) would interfere with other checks, i.e. variable check
  */
 
-long stringIsNumber(char *str){
+int stringIsNumber(char *str){
     
     
     int i = 0;
     // base case check for null
     if (str == NULL) {
-        return INVALID_INT;
+        return 0;
     }
     // get the string length
     int len = strlen(str);
@@ -539,12 +537,19 @@ long stringIsNumber(char *str){
     // return a defined invalid int value
     for (i = 0; i < len; i++) {
         if (isdigit(str[i]) == 0) {
-            return INVALID_INT;
+            return 0;
         }
     }
-    // if the string is numerical, then return the numerical value
-    // transform string to a long
-    return strtol(str, (char **)NULL, 10);
+    
+    // if string is numerical, but has more than 5 digits, exit error
+    if (len > 5) {
+        printf("Error, string: %s is numerical, but it has more than 5 digits\n", str);
+        exit(EXIT_FAILURE);
+    }
+    
+    // if the string is numerical, then return 1
+    //strtol(str, (char **)NULL, 10)
+    return 1;
     
 }
 /*
@@ -554,19 +559,27 @@ long stringIsNumber(char *str){
  */
 int isValidVariableAndNotReserved(char *str){
     
-    int i = 0;
     // base case check for null or is a reserved word or is numerical
-    if (str == NULL || isReserverdWord(str) || (stringIsNumber(str) != INVALID_INT)) {
+    if (str == NULL || isReserverdWord(str) || stringIsNumber(str)) {
         return 0;
     }
     
     // get the string length
     int len = strlen(str);
     
-    // all base cases have already been check before checking if first char is a digit
-    if (isdigit(str[0]) || ispunct(str[0]) || len > MAX_VAR_LEN) {
-        return 0;
+    // wont check for is special character, at this point, the str would have not been
+    // passed to be check for variable
+    
+    // does variable start with a letter, or is of legal size
+    if ((isalpha(str[0]) == 0) || len > MAX_VAR_LEN ) {
+        return 0; //  remove this line later
+        /* add this section after completing testing of method _____________________
+         printf("Error, variable %s is invalid\n", str);
+         exit(EXIT_FAILURE);
+         */ //_______________________________________________________________________
     }
+    
+    // at this point, isnumber, is symbol, is reservedword, is special char have all been checked
     
     return 1;
 }
