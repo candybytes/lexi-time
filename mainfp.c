@@ -103,12 +103,7 @@ int isReserverdWord(char *str);
 void IdentifyInputToken(char *caCleanInputTokens[]); //----test as of now
 int stringIsNumber(char *str);
 int isValidVariableAndNotReserved(char *str);
-
-//--- Replacement functions for ctype.h. Name changed slightly to avoid conflicting names -----// Added 6/12/2015
-// WARNING: PLEASE USE FUNCTION CALL EXACTLY AS SPELLED. All calls within the program have been updated to reflect changes.
-int isAlpha(char c);
-int isDigit(char c);
-int isPunct(char c);
+int validSymbolPair(char c1, char c2);
 
 
 // -----------------Initial call to program  -----------------
@@ -582,25 +577,29 @@ int isValidVariableAndNotReserved(char *str){
     
     // does variable start with a letter, or is of legal size
     if ((charType(str[0]) != 2) || len > MAX_VAR_LEN ) {
-        return 0; //  remove this line later
-        /*/ add this section after completing testing of method _____________________
-         printf("Error, variable %s is invalid\n", str);
-         exit(EXIT_FAILURE);
-         */ //_______________________________________________________________________
+        //return 0; //  remove this line later
+        
+        printf("Error, variable %s is invalid\n", str);
+        exit(EXIT_FAILURE);
     }
     
     // at this point, isnumber, is symbol, is reservedword, is special char have all been checked
     
     return 1;
 }
-
+// TO-DO   add function comments about input and what it does
+// TO-DO   Instead of printing to screen, print to the file :-) easy
 void IdentifyInputToken(char *caCleanInputTokens[]){
     
+    int ssNext = 0;
     int ss = 0;
     int rw = 0;
     int tknlen = 0;
+    int tknLenNext = 0;
     int i = 0;
+    int vs = 0;
     
+    printf("%-20s %-12s %-12s\n","lexeme:", "token", "value");
     for (i = 0; i < m_nCleanInputTokens ; i++) {
         
         char *str = caCleanInputTokens[i];
@@ -608,25 +607,42 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
         
         // check if it is a reserved word
         if ( ( rw = isReserverdWord(str) ) && tknlen > 1 ){
-            printf("%-25s %-12s token type: %-4d\n","reserved word lexeme:", str, m_naWsym[(rw - 1)] );
+            printf("%-20s %-12s %-4d\n","reserved", str, m_naWsym[(rw - 1)] );
             continue;
         }
         
         // check if token is number
         if  (stringIsNumber(str)){
-            printf("%-25s %-12s token type: %-4d\n","number lexeme:", str, 3 );
+            // if is invalid length or illegal number, it will fail at check
+            printf("%-20s %-12s %-4d\n","number", str, 3 );
             continue;
         }
         
         // check if token is variable
         if  (isValidVariableAndNotReserved(str)){
-            printf("%-25s %-12s token type: %-4d\n","variable lexeme", str, 2 );
+            // if is invalid length or illegal variable, it will fail at check
+            printf("%-20s %-12s %-4d\n","variable", str, 2 );
             continue;
         }
         
         // check if token special symbol
         if  ( ( ss = isSpecialChar(str[0]) ) && tknlen == 1 ){
-            printf("%-25s %-12s token type: %-4d\n","spec char lexeme:", str, m_naSpecialSymbols[(ss - 1)] );
+            
+            // current token is a symbol, check if next token is symbol
+            // do not increase index counter, just look ahead
+            char *strNext = caCleanInputTokens[i + 1];
+            tknLenNext = strlen(str);
+            if ( strlen(strNext) == 1 && isSpecialChar(strNext[0])) {
+                // next token is of length 1, is a symbol
+                // check if they are a legal symbol pair : >=, <=, < >, :=
+                if ((vs = validSymbolPair(str[0], strNext[0])) ) {
+                    i++;
+                    printf("%-20s %c%c %-9s %-4d\n","Symbol pair", str[0], strNext[0]," ", vs);
+                    continue;
+                }
+            }
+            
+            printf("%-20s %-12s %-4d\n","spec char", str, m_naSpecialSymbols[(ss - 1)] );
             continue;
         }
     }
@@ -634,118 +650,49 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
     
 }
 
-// ctype functions are not being used right now
-int isAlpha(char c)
-{
-    // We are assuming all characters in the program are lowercase as specified by Pawel
-    switch(c)
-    {
-            // Compact notation used for switch cases to save space
-        case 'a':
-        case 'b':
-        case 'c':
-        case 'd':
-        case 'e':
-        case 'f':
-        case 'g':
-        case 'h':
-        case 'i':
-        case 'j':
-        case 'k':
-        case 'l':
-        case 'm':
-        case 'n':
-        case 'o':
-        case 'p':
-        case 'q':
-        case 'r':
-        case 's':
-        case 't':
-        case 'u':
-        case 'v':
-        case 'w':
-        case 'x':
-        case 'y':
-        case 'z':
-            // Just in case the person grading the program is a total jerk
-        case 'A':
-        case 'B':
-        case 'C':
-        case 'D':
-        case 'E':
-        case 'F':
-        case 'G':
-        case 'H':
-        case 'I':
-        case 'J':
-        case 'K':
-        case 'L':
-        case 'M':
-        case 'N':
-        case 'O':
-        case 'P':
-        case 'Q':
-        case 'R':
-        case 'S':
-        case 'T':
-        case 'U':
-        case 'V':
-        case 'W':
-        case 'X':
-        case 'Y':
-        case 'Z':
-            return 1;
+/*
+ *  int validSymbolPair(char c1, char c2)
+ *  takes two consecutive characters and check if
+ *  they are a valid symbols pair >=, <=, :=, < >
+ *  if they are invalid pair of characters, its a fatal error, exit program
+ */
+int validSymbolPair(char c1, char c2){
+    // c1, is current symbol, c2 is next symbol
+    // check if they are a legal symbol pair : >=, <=, :=, < >
+    
+    int r = 0;
+    
+    switch (c2) {
+        case '=':
+            if (c1 == '>') {
+                // >=
+                r = geqsym;
+            }
+            if (c1 == '<') {
+                // <=
+                r = leqsym;
+            }
+            if (c1 == ':') {
+                r = becomessym;
+            }
+            break;
+        case '>':
+            if (c1 == '<') {
+                r = neqsym;
+            }
             break;
             
         default:
-            return 0;
             break;
     }
-}
-
-// Helper function to replace isdigit() in ctype.h
-int isDigit(char c)
-{
-    switch(c)
-    {
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            return 1;
-            break;
-            
-        default:
-            return 0;
-            break;
+    
+    if (r) {
+        return r;
+    } else {
+        printf("the symbol pair is ilegal %c%c\n",c1,c2);
+        exit(EXIT_FAILURE);
     }
 }
-
-int isPunct(char c)
-{
-    switch(c)
-    {
-        case '.':
-        case ',':
-        case '!':
-        case '?':
-        case ';':
-            return 1;
-            break;
-            
-        default:
-            return 0;
-            break;
-    }
-}
-
-
 
 
 
