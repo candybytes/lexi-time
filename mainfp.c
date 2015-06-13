@@ -170,16 +170,34 @@ int main(int argc, char *argv[]) {
     //for (i = 0; i < 0; i++) {
     // use these functions to build lexeme data structure
     // TO-D0 check for symbols groups (i.e >=, <=, < >, :=)
-    printf("%-12s%-10s%-10s%-10s\n","lexeme","reserved","numerical","variable");
-    for (i = 0; i < m_nCleanInputTokens ; i++) {
-        printf("%-12s", caCleanInputTokens[i] );
-        printf("%-10d", isReserverdWord(caCleanInputTokens[i]) ? 1 : 0);
-        printf("%-10d", stringIsNumber(caCleanInputTokens[i]) );
-        printf("%-10d\n", isValidVariableAndNotReserved(caCleanInputTokens[i]) );
-        
+    
+    for (i = 0; i < count; i++) {
+        //printf("%d\n", cleanCode[count] );
+        //printf("%c\n", cleanCode[i] );
     }
+    
+    
+    printf("\n\n\n");
+    
+    
+    for (i = 0; i < m_nCleanInputTokens; i++) {
+        //printf("%d\n", cleanCode[count] );
+        //printf("%-12s\n", caCleanInputTokens[i] );
+    }
+    
+    /*
+     printf("%-12s%-10s%-10s%-10s\n","lexeme","reserved","numerical","variable");
+     for (i = 0; i < m_nCleanInputTokens ; i++) {
+     printf("%-12s", caCleanInputTokens[i] );
+     printf("%-10d", isReserverdWord(caCleanInputTokens[i]) ? 1 : 0);
+     printf("%-10d", stringIsNumber(caCleanInputTokens[i]) );
+     printf("%-10d\n", isValidVariableAndNotReserved(caCleanInputTokens[i]) );
+     
+     }
+     */
     printf("token count %d\n\n\n", m_nCleanInputTokens );
     IdentifyInputToken(caCleanInputTokens);
+    
     
     //----------test print end-----------//
     
@@ -412,6 +430,7 @@ int charType(char c){
 
 void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]){
     
+    int curCharIsSpecial = 0;
     int i = 0;
     int j = 0;
     //int newTkn = 0;
@@ -424,13 +443,21 @@ void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]){
         // if this is a non empty character, store it into local token array
         if (charType(cleanSrc[i])) {
             // increase both token index and cleanSrc index
+            
+            // check if this character is a special character, if it is
+            //mark a flag and print it, reset token in next code block
+            curCharIsSpecial = isSpecialChar(cleanSrc[i]);
+            
             tkn[j++] = cleanSrc[i++];
+            
         }
         // check if this is a new line or space (empty character)
-        if ( (charType(cleanSrc[i]) == 0 ) || isSpecialChar(cleanSrc[i])) {
+        if ( isSpecialChar(cleanSrc[i]) ||(charType(cleanSrc[i]) == 0 ) || curCharIsSpecial ) {
             // if at least one chacter is in local token array, print it and reset token
+            //printf("clean source %c\n", cleanSrc[i] );
             if(j) {
                 // allocate space for token, store token, increase token count
+                //printf("tkn %s\n",tkn);
                 caCleanInputTokens[m_nCleanInputTokens] = cleanInputTokenCalloc(j);
                 strcpy(caCleanInputTokens[m_nCleanInputTokens], tkn);
                 m_nCleanInputTokens++;
@@ -587,8 +614,7 @@ int isValidVariableAndNotReserved(char *str){
     
     return 1;
 }
-// TO-DO   add function comments about input and what it does
-// TO-DO   Instead of printing to screen, print to the file :-) easy
+
 void IdentifyInputToken(char *caCleanInputTokens[]){
     
     int ssNext = 0;
@@ -603,6 +629,7 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
     for (i = 0; i < m_nCleanInputTokens ; i++) {
         
         char *str = caCleanInputTokens[i];
+        //printf("token here %s\n",str);
         tknlen = strlen(str);
         
         // check if it is a reserved word
@@ -630,15 +657,17 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
             
             // current token is a symbol, check if next token is symbol
             // do not increase index counter, just look ahead
-            char *strNext = caCleanInputTokens[i + 1];
-            tknLenNext = strlen(str);
-            if ( strlen(strNext) == 1 && isSpecialChar(strNext[0])) {
-                // next token is of length 1, is a symbol
-                // check if they are a legal symbol pair : >=, <=, < >, :=
-                if ((vs = validSymbolPair(str[0], strNext[0])) ) {
-                    i++;
-                    printf("%-20s %c%c %-9s %-4d\n","Symbol pair", str[0], strNext[0]," ", vs);
-                    continue;
+            if (i < m_nCleanInputTokens -1){
+                char *strNext = caCleanInputTokens[i + 1];
+                tknLenNext = strlen(str);
+                if ( strlen(strNext) == 1 && isSpecialChar(strNext[0])) {
+                    // next token is of length 1, is a symbol
+                    // check if they are a legal symbol pair : >=, <=, < >, :=
+                    if ((vs = validSymbolPair(str[0], strNext[0])) ) {
+                        i++;
+                        printf("%-20s %c%c %-9s %-4d\n","Symbol pair", str[0], strNext[0]," ", vs);
+                        continue;
+                    }
                 }
             }
             
@@ -650,12 +679,7 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
     
 }
 
-/*
- *  int validSymbolPair(char c1, char c2)
- *  takes two consecutive characters and check if
- *  they are a valid symbols pair >=, <=, :=, < >
- *  if they are invalid pair of characters, its a fatal error, exit program
- */
+
 int validSymbolPair(char c1, char c2){
     // c1, is current symbol, c2 is next symbol
     // check if they are a legal symbol pair : >=, <=, :=, < >
