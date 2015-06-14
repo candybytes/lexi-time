@@ -16,8 +16,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// TO-DO write ctype functions, can not include <ctype.h> library
-#include <ctype.h>
 
 
 //------------------ global constants and given constants by assigment -------
@@ -81,10 +79,22 @@ char m_caSpecialSymbols[] = {'+', '-', '*', '/', '(', ')', '=', ',' , '.', '<', 
 // special punctuation symbols enumerator values
 int m_naSpecialSymbols[] = {plussym, minussym, multsym, slashsym, lparentsym, rparentsym, eqlsym, commasym, periodsym, lessym, gtrsym, semicolonsym, becomessym};
 
+// --------------ctype enums and structs --------------
+typedef enum {AlphaTop = 52, PunctTop = 33, NumberTop = 10} eCharTops;
 
+int m_naAlphaChars[] = {65, 66,67,68,69,70,71,72,73,74,
+    75,76,77,78,79,80,81,82,83,84,
+    85,86,87,88,89,90,97,98,99,100,
+    101,102,103,104,105,106,107,108,109,110,
+    111,112,113,114,115,116,117,118,119,120,
+    121,122};
 
+int m_naPunctChars[] = {9, 33,34,35,36,37,38,39,40,41,42,
+    43,44,45,46,47, 58,59,60, 61,62,
+    63,64,91,92,93,94,95,96,123,124,
+    125,126};
 
-
+int m_naNumericalChars[] = {48,49,50,51,52,53,54,55,56,57};
 
 
 //------------------- Read ahead function prototypes--------------
@@ -104,6 +114,12 @@ void IdentifyInputToken(char *caCleanInputTokens[]); //----test as of now
 int stringIsNumber(char *str);
 int isValidVariableAndNotReserved(char *str);
 int validSymbolPair(char c1, char c2);
+
+//--- Replacement functions for <ctype.h> Name changed slightly to avoid conflicting names -----// Added 6/12/2015
+int isAlpha(char c);
+int isDigit(char c);
+int isPunct(char c);
+int binarySearch (int *Array, int top, int target);
 
 
 // -----------------Initial call to program  -----------------
@@ -307,7 +323,6 @@ int charCount(FILE *fp){
  * input file will be then store for use by other functions
  *
  */
-
 void readInput(FILE *fp, char src[]){
     
     int i = 0;
@@ -336,7 +351,12 @@ void readInput(FILE *fp, char src[]){
     
     return;
 }
-
+/**
+ * "cleanInput(FILE *fp, char src[], int count, char cleanSrc[])"
+ * remove the comments from the input code
+ * print valid
+ *
+ */
 void cleanInput(FILE *fp, char src[], int count, char cleanSrc[]){
     
     int p = 1;
@@ -407,17 +427,31 @@ void fileReadError(char fileName[], int writing ){
  *  0 for neither, 1 for numerical, 2 for letter, 3 for punctuation
  */
 int charType(char c){
-    // is c a number
-    if (isdigit(c)) {
-        return 1;
+    
+    int r =0;
+    
+    int target = (int)c;
+    
+    
+    if (target > 47) {
+        // is c a number digit
+        if (isDigit( c ) ) {
+            return 1;
+        }
     }
-    // is c a letter
-    if (isalpha(c)) {
-        return 2;
+    
+    if (target > 9) {
+        // is c a punctuation
+        if (isPunct( c ) ) {
+            return 3;
+        }
     }
-    // is c a punctuation
-    if (ispunct(c)) {
-        return 3;
+    
+    if (target > 64) {
+        // is c a alpha letter
+        if (isAlpha( c ) ) {
+            return 2;
+        }
     }
     // else default, return 0, is neither of the three types
     return 0;
@@ -427,16 +461,12 @@ int charType(char c){
  *   "void splitInputTokens(char cleanSrc[])"
  *   split clean source code into tokens
  */
-
 void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]){
     
     int curCharIsSpecial = 0;
     int i = 0;
     int j = 0;
-    //int newTkn = 0;
     char tkn[MAX_STR] = " ";
-    //int tokens = 0;
-    
     
     while (i <= m_nCleanCount ) {
         
@@ -481,6 +511,7 @@ void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]){
     }
     
 }
+
 /*
  *   "isSpecialChar(char c)"
  *   check if character passed is a special Symbol punctuation
@@ -507,6 +538,7 @@ char *cleanInputTokenCalloc(int tknSize){
     }
     return temp;
 }
+
 /*
  *   "void freeInputTokenCalloc(char *caCleanInputTokens[])"
  *   free memory allocated for clean tokens
@@ -550,9 +582,7 @@ int isReserverdWord(char *str){
  *   we need to know if it is a number regardless of legth
  *   a false (false return) would interfere with other checks, i.e. variable check
  */
-
 int stringIsNumber(char *str){
-    
     
     int i = 0;
     // base case check for null
@@ -580,6 +610,7 @@ int stringIsNumber(char *str){
     return 1;
     
 }
+
 /*
  *   "int isValidVariable(char *str)"
  *   check if string of valid length, does not start with number or symbol
@@ -610,11 +641,17 @@ int isValidVariableAndNotReserved(char *str){
         exit(EXIT_FAILURE);
     }
     
-    // at this point, isnumber, is symbol, is reservedword, is special char have all been checked
+    // at this point, isnumber, is symbol, is reserved word, is special char have all been checked
     
     return 1;
 }
 
+/*
+ *  IdentifyInputToken(char *caCleanInputTokens[])
+ *  take each token and check if its a reserved word, numerical or symbol pail, or variable
+ *  if token is an illegal lexeme, print out error and exit program
+ *
+ */
 void IdentifyInputToken(char *caCleanInputTokens[]){
     
     int ssNext = 0;
@@ -679,7 +716,13 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
     
 }
 
-
+/*
+ *  "validSymbolPair(char c1, char c2)"
+ *  it will take current character c1, and next char c2
+ *  check if the combo of both is a legal lexime >=, <=, :=, < >
+ *  it it is legal lexeme, it returns the lexeme value for the combo
+ *  if it is illegal, is a fatal error and exit program
+ */
 int validSymbolPair(char c1, char c2){
     // c1, is current symbol, c2 is next symbol
     // check if they are a legal symbol pair : >=, <=, :=, < >
@@ -691,13 +734,16 @@ int validSymbolPair(char c1, char c2){
             if (c1 == '>') {
                 // >=
                 r = geqsym;
+                break;
             }
             if (c1 == '<') {
                 // <=
                 r = leqsym;
+                break;
             }
             if (c1 == ':') {
                 r = becomessym;
+                break;
             }
             break;
         case '>':
@@ -718,6 +764,84 @@ int validSymbolPair(char c1, char c2){
     }
 }
 
+//----------------------ctype functions ---- 1 for numerical, 2 for letter, 3 for punctuation
 
+/*
+ *  binarySearch (int *Array, int top, int target)
+ *  search for a char c ascii value, if it is in list of values in Array passed
+ *  return 1, else is not found return 0;
+ */
+int binarySearch (int *Array, int top, int target) {
+    // Given a ascending sorted Array[0..top],
+    // Return 1 such that Array[i] = target.
+    // Return 0 if target is not in Array.
+    
+    int lower, middle, upper;
+    lower = 0;
+    upper = top;
+    
+    while ( upper >= lower  ) {
+        middle = ( upper + lower ) / 2;
+        if  (Array[middle] == target){
+            return( 1 );
+        }
+        if (Array[middle] < target){
+            lower = middle + 1;
+        }
+        else { upper = middle - 1;}
+    };
+    
+    // not found.
+    return( 0 );
+}
+
+
+/*
+ *  isDigit(char c)
+ *  return 1 if char is a digit, 0 if not
+ */
+int isDigit(char c){
+    // transform char into number
+    int target = (int)c;
+    // ascii codes for numerical chars are from 48 to 57
+    if (target > 47) {
+        if (binarySearch (m_naNumericalChars, NumberTop, target)){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/*
+ *  isAlpha(char c)
+ *  return 1 if char is an alpha, 0 if not
+ */
+int isAlpha(char c){
+    // transform char into number
+    int target = (int)c;
+    // ascii codes for alpha chars are from 65 forward
+    if (target > 64) {
+        if ( binarySearch (m_naAlphaChars, AlphaTop, target) ){
+            return 2;
+        }
+    }
+    return 0;
+}
+
+/*
+ *  isPunct(char c)
+ *  return 1 if char is an punctuation, 0 if not
+ */
+int isPunct(char c){
+    // transform char into number
+    int target = (int)c;
+    // ascii codes for alpha chars are from [ 9 ] & 65 forward
+    if (target > 9) {
+        if (binarySearch (m_naPunctChars, PunctTop, target)) {
+            return 3;
+        }
+    }
+    return 0;
+}
 
 
