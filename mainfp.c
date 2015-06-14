@@ -428,31 +428,17 @@ void fileReadError(char fileName[], int writing ){
  */
 int charType(char c){
     
-    int r =0;
-    
+    int result =0;
     int target = (int)c;
     
-    
-    if (target > 47) {
-        // is c a number digit
-        if (isDigit( c ) ) {
-            return 1;
-        }
-    }
-    
     if (target > 9) {
-        // is c a punctuation
-        if (isPunct( c ) ) {
-            return 3;
+        if ( (result = isDigit( c )) || (result = isPunct( c ) ) || ( result = isAlpha( c ) ) ){
+            // if any is true, then result will have the corresponding value already
+            // result = 1 for numerical, result = 2 for letter, result = 3 for punctuation
+            return (result);
         }
     }
     
-    if (target > 64) {
-        // is c a alpha letter
-        if (isAlpha( c ) ) {
-            return 2;
-        }
-    }
     // else default, return 0, is neither of the three types
     return 0;
 }
@@ -731,25 +717,13 @@ int validSymbolPair(char c1, char c2){
     
     switch (c2) {
         case '=':
-            if (c1 == '>') {
-                // >=
-                r = geqsym;
-                break;
-            }
-            if (c1 == '<') {
-                // <=
-                r = leqsym;
-                break;
-            }
-            if (c1 == ':') {
-                r = becomessym;
-                break;
-            }
+            if (r += ( (c1 == '>') ? geqsym : 0 )) { break; }
+            if (r += ( (c1 == '<') ? leqsym : 0 )) { break; }
+            if (r += ( (c1 == ':') ? becomessym : 0 )) { break; }
             break;
+            
         case '>':
-            if (c1 == '<') {
-                r = neqsym;
-            }
+            if (r += ( (c1 == '<') ? neqsym : 0 )) { break; }
             break;
             
         default:
