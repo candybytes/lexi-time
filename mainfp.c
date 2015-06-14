@@ -648,7 +648,16 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
     int i = 0;
     int vs = 0;
     
+    // copy lexemetable file pointer
+    FILE *lexTable = m_FPS[lexemetable_txt];
+    // copy lexemelist file pointer
+    FILE *lexList = m_FPS[lexemelist_txt];
+    
     printf("%-20s %-12s %-12s\n","lexeme:", "token", "value");
+    
+    // print headers to lexemetable.txt file
+    fprintf( lexTable, "%-12s%s\n", LBLS[0], LBLS[1] );
+    
     for (i = 0; i < m_nCleanInputTokens ; i++) {
         
         char *str = caCleanInputTokens[i];
@@ -658,6 +667,10 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
         // check if it is a reserved word
         if ( ( rw = isReserverdWord(str) ) && tknlen > 1 ){
             printf("%-20s %-12s %-4d\n","reserved", str, m_naWsym[(rw - 1)] );
+            // print reserved word to lexemetable.txt file
+            fprintf( lexTable, "%-12s%d\n", str, m_naWsym[(rw - 1)] );
+            // print reserved word token type to lexemelist.txt file
+            fprintf( lexList, "%d ", m_naWsym[(rw - 1)] );
             continue;
         }
         
@@ -665,6 +678,10 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
         if  (stringIsNumber(str)){
             // if is invalid length or illegal number, it will fail at check
             printf("%-20s %-12s %-4d\n","number", str, 3 );
+            // print integer and type to lexemetable.txt file
+            fprintf( lexTable, "%-12s%d\n", str, 3 );
+            // print integer token type to lexemelist.txt file
+            fprintf( lexList, "%d %s ", 3, str );
             continue;
         }
         
@@ -672,6 +689,10 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
         if  (isValidVariableAndNotReserved(str)){
             // if is invalid length or illegal variable, it will fail at check
             printf("%-20s %-12s %-4d\n","variable", str, 2 );
+            // print headers to lexemetable.txt file
+            fprintf( lexTable, "%-12s%d\n", str, 2 );
+            // print variable token type to lexemelist.txt file
+            fprintf( lexList, "%d %s ", 2, str );
             continue;
         }
         
@@ -689,15 +710,27 @@ void IdentifyInputToken(char *caCleanInputTokens[]){
                     if ((vs = validSymbolPair(str[0], strNext[0])) ) {
                         i++;
                         printf("%-20s %c%c %-9s %-4d\n","Symbol pair", str[0], strNext[0]," ", vs);
+                        // print symbol pair and value to lexemetable.txt file
+                        fprintf( lexTable, "%c%c%-10s%d\n", str[0], strNext[0]," ", vs);
+                        // print ( symbol pair's ) value to lexemelist.txt file
+                        fprintf( lexList, "%d ", vs);
                         continue;
                     }
                 }
             }
             
             printf("%-20s %-12s %-4d\n","spec char", str, m_naSpecialSymbols[(ss - 1)] );
+            // print symbol to lexemetable.txt file
+            fprintf( lexTable, "%-12s%d\n", str, m_naSpecialSymbols[(ss - 1)]  );
+            // print ( symbol ) value to lexemelist.txt file
+            fprintf( lexList, "%d ", m_naSpecialSymbols[(ss - 1)]);
             continue;
         }
     }
+    // close the -lexemetable.txt- file pointer
+    fclose(lexTable);
+    // close the -lexemelist.txt- file pointer
+    fclose(lexList);
     
     
 }
