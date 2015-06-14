@@ -235,8 +235,8 @@ int main(int argc, char *argv[]) {
     // replace file pointers by knicnames created just like in line 115 and 117
     // knicknames for file pointers examples FILE *ifp = m_FPS[input_txt];
     // file pointer is already open and active, knickname is local
-    fclose(m_FPS[lexemetable_txt]);
-    fclose(m_FPS[lexemelist_txt]);
+    //fclose(m_FPS[lexemetable_txt]);
+    //fclose(m_FPS[lexemelist_txt]);
     
     
     return 0;
