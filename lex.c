@@ -5,11 +5,12 @@
 // Second team member name : Danish Waheed
 
 /**
- *  lex.c
+ *  scanner.c
  *  Lexical Analizer
  *
  *  Created by Robert Valladares and Danish Waheed on 06/01/15.
  *  Copyright (c) 2015 ROBERT VALLADARES and DANISH WAHEED. All rights reserved.
+ *  UPDATED CharType functions 6/19/2015
  */
 
 // Library declarations
@@ -42,8 +43,8 @@ int m_nCleanInputTokens = 0;                // global variable to track count of
 
 //global strings for input output file names
 char *LBLS[] = {"lexeme", "token type"};
-char *FNS[] = {"input.txt", "cleaninput.txt", "lexemetable.txt", "lexemelist.txt"};//, "lexTable.txt", "lextList.txt"};
-typedef enum {input_txt, cleaninput_txt, lexemetable_txt, lexemelist_txt} eFNS;//, lexTable_txt, lextList_txt} eFNS;
+char *FNS[] = {"input.txt", "cleaninput.txt", "lexemetable.txt", "lexemelist.txt"};
+typedef enum {input_txt, cleaninput_txt, lexemetable_txt, lexemelist_txt} eFNS;
 // file pointer array
 FILE *m_FPS[MAX_FILES];
 
@@ -62,7 +63,7 @@ typedef enum {lexConstant = 1, lexVar, lexProc} eLexemeKind;
 //structure of the symbol table record
 typedef struct {
     
-    int TokenType;           // token type
+    int TokenType;      // token type
     int kind;           // constant = 1; var = 2, proc = 3
     char name[12];      // name up to 11 characters long, 11 + 1 for \0
     int val;            // number (ASCII value)
@@ -76,13 +77,18 @@ typedef struct {
 char *word[] = {"null", "begin", "call", "const", "do", "else", "end", "if", "odd", "procedure", "read", "then", "var", "while", "write" };
 //  reserved words numerical representation from the token_type enum
 int m_naWsym[] = { nulsym, beginsym, callsym, constsym, dosym, elsesym, endsym, ifsym, oddsym, procsym, readsym, thensym, varsym, whilesym, writesym};
+
 // special punctuation symbols
-char m_caSpecialSymbols[] = {'+', '-', '*', '/', '(', ')', '=', ',' , '.', '<', '>', ';', ':'};
+char m_caSpecialSymbols[] = {'(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>'};
+
 // special punctuation symbols enumerator values
-int m_naSpecialSymbols[] = {plussym, minussym, multsym, slashsym, lparentsym, rparentsym, eqlsym, commasym, periodsym, lessym, gtrsym, semicolonsym, becomessym};
+int m_naSpecialSymbols[] = {lparentsym, rparentsym, multsym, plussym, commasym, minussym, periodsym, slashsym,  becomessym,   semicolonsym, lessym, eqlsym, gtrsym};
+
+// special punctuation ascii values
+int m_naSpecSymPunt[] = {40, 41, 42, 43, 44, 45, 46, 47, 58, 59, 60, 61, 62};
 
 // --------------ctype enums and structs --------------
-typedef enum {AlphaTop = 52, PunctTop = 33, NumberTop = 10} eCharTops;
+typedef enum {AlphaTop = 52, PunctTop = 33, NumberTop = 10, SpecialCharTop = 13} eCharTops;
 
 int m_naAlphaChars[] = {65, 66,67,68,69,70,71,72,73,74,
     75,76,77,78,79,80,81,82,83,84,
@@ -185,7 +191,6 @@ int main(int argc, char *argv[]) {
     // or after printing it to file
     splitInputTokens(cleanCode, caCleanInputTokens);
     
-    
     // there will be at most m_nCleanCount separate namerecord_t tokens
     namerecord_t namerecord_table[m_nCleanCount];
     initializeNamerecord_table(namerecord_table);
@@ -206,7 +211,7 @@ int main(int argc, char *argv[]) {
         printf("%s \n", FNS[i]);
         
     }
-    printf("in the same folder where lex.c is located \n\n");
+    printf("in the same folder where scanner.c is located \n\n");
     
     return 0;
 }
@@ -217,7 +222,6 @@ int main(int argc, char *argv[]) {
  * file pointers are stored in an array for global use
  * handle null pointer exeptions immediatly
  */
-
 void createFilePointers(){
     
     char *mode = "r";
@@ -320,6 +324,7 @@ void readInput(FILE *fp, char src[]){
     
     return;
 }
+
 /**
  * "cleanInput(FILE *fp, char src[], int count, char cleanSrc[])"
  * remove the comments from the input code
@@ -472,15 +477,16 @@ void splitInputTokens(char cleanSrc[], char *caCleanInputTokens[]){
  *   check if character passed is a special Symbol punctuation
  */
 int isSpecialChar(char c){
-    int i = 0;
-    for (i = 0; i <= MAX_PUNCT ; i++) {
-        if (m_caSpecialSymbols[i] == c) {
-            // i+1 will be used to identify enum value later
-            return (i + 1);
-        }
-    }
-    return 0;
+    
+    // transform char into number
+    int target = (int)c;
+    int result = 0;
+    
+    // ascii codes for special punctuation chars are from 40 and beyond
+    return ( (target > 39) && (result = binarySearch (m_naSpecSymPunt, SpecialCharTop, target)) ) ? result : 0;
+    
 }
+
 /*
  *   "char *cleanInputTokenCalloc(int tknSize)"
  *   allocate memory for caCleanInputTokens[index] strings
@@ -509,7 +515,6 @@ void freeInputTokenCalloc(char *caCleanInputTokens[]){
         }
         
     }
-    
     
 }
 
@@ -629,7 +634,7 @@ void IdentifyInputToken(char *caCleanInputTokens[], namerecord_t *record_table){
         if ( ( rw = isReserverdWord(str) ) && tknlen > 1 ){
             // insert token record in record_table
             insertNamerecord_table(LexRecordIndex++, record_table, lexProc, 0, ' ', ' ', str, m_naWsym[(rw - 1)] );
-
+            
             continue;
         }
         
@@ -639,14 +644,14 @@ void IdentifyInputToken(char *caCleanInputTokens[], namerecord_t *record_table){
             
             // insert token record in record_table
             insertNamerecord_table(LexRecordIndex++, record_table, lexConstant, 0, ' ', ' ', str, 3 );
-
+            
             continue;
         }
         
         // check if token is variable
         if  (isValidVariableAndNotReserved(str)){
             // if is invalid length or illegal variable, it will fail at check
-
+            
             // insert token record in record_table
             insertNamerecord_table(LexRecordIndex++, record_table, lexVar, 0, ' ', ' ', str, 2 );
             
@@ -739,7 +744,7 @@ int binarySearch (int *Array, int top, int target) {
     while ( upper >= lower  ) {
         middle = ( upper + lower ) / 2;
         if  (Array[middle] == target){
-            return( 1 );
+            return( middle + 1 );
         }
         if (Array[middle] < target){
             lower = middle + 1;
@@ -760,45 +765,34 @@ int isDigit(char c){
     // transform char into number
     int target = (int)c;
     // ascii codes for numerical chars are from 48 to 57
-    if (target > 47) {
-        if (binarySearch (m_naNumericalChars, NumberTop, target)){
-            return 1;
-        }
-    }
-    return 0;
+    return ((target > 47) && (binarySearch (m_naNumericalChars, NumberTop, target)) ) ? 1 : 0;
+    
 }
 
 /*
  *  isAlpha(char c)
- *  return 1 if char is an alpha, 0 if not
+ *  return 2 if char is an alpha, 0 if not
  */
 int isAlpha(char c){
     // transform char into number
     int target = (int)c;
     // ascii codes for alpha chars are from 65 forward
-    if (target > 64) {
-        if ( binarySearch (m_naAlphaChars, AlphaTop, target) ){
-            return 2;
-        }
-    }
-    return 0;
+    return  ( ( (target > 64) && ( binarySearch (m_naAlphaChars, AlphaTop, target) ) ) ? 2 : 0 );
+    
 }
 
 /*
  *  isPunct(char c)
- *  return 1 if char is an punctuation, 0 if not
+ *  return 3 if char is an punctuation, 0 if not
  */
 int isPunct(char c){
     // transform char into number
     int target = (int)c;
     // ascii codes for alpha chars are from [ 9 ] & 65 forward
-    if (target > 9) {
-        if (binarySearch (m_naPunctChars, PunctTop, target)) {
-            return 3;
-        }
-    }
-    return 0;
+    return ( ( (target > 9) && ( binarySearch (m_naPunctChars, PunctTop, target) ) ) ? 3 : 0 );
+    
 }
+
 /*
  *  initializeNamerecord_table(namerecord_t *record_table)
  *  set the default values for the namerecord_t record_table
@@ -821,6 +815,7 @@ void initializeNamerecord_table(namerecord_t *record_table){
     return;
     
 }
+
 /*
  *  insertNamerecord_table(.....)
  *  enter one record at a time as being passed from "IdentifyInputToken(...)"
@@ -862,12 +857,10 @@ void printNamerecord_table(namerecord_t *record_table){
     FILE *lexTable = m_FPS[lexemetable_txt];
     // copy lexemelist file pointer
     FILE *lexList = m_FPS[lexemelist_txt];
-
     
     int i = 0;
     
     if (record_table != NULL) {
-        
         
         // print headers to screen
         printf("\n\n%-12s%s\n", LBLS[0], LBLS[1]);
@@ -898,7 +891,6 @@ void printNamerecord_table(namerecord_t *record_table){
     fclose(lexTable);
     // close the -lexemelist.txt- file pointer
     fclose(lexList);
-    
     
     return;
 }
